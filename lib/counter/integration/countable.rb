@@ -14,12 +14,12 @@ module Counter::Countable
 
   class_methods do
     def counted_by
-      @@counted_by
+      @counted_by
     end
 
-    def add_counted_by parent_class, counter_class, association_name, inverse_association
-      @@counted_by ||= []
-      @@counted_by << [parent_class, counter_class, association_name, inverse_association]
+    def add_counted_by config
+      @counted_by ||= []
+      @counted_by << config
     end
   end
 end

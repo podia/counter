@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_09_211056) do
+ActiveRecord::Schema.define(version: 2021_07_29_221419) do
 
   create_table "counter_changes", force: :cascade do |t|
     t.integer "counter_value_id"
@@ -33,5 +33,32 @@ ActiveRecord::Schema.define(version: 2021_07_09_211056) do
     t.index ["type"], name: "index_counter_values_on_type"
   end
 
+  create_table "orders", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "product_id", null: false
+    t.integer "price"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["product_id"], name: "index_orders_on_product_id"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name"
+    t.integer "price"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["user_id"], name: "index_products_on_user_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   add_foreign_key "counter_changes", "counter_values"
+  add_foreign_key "orders", "products"
+  add_foreign_key "orders", "users"
+  add_foreign_key "products", "users"
 end

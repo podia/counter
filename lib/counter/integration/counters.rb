@@ -16,6 +16,8 @@ module Counter::Counters
   class_methods do
     # keep_count_of students: SiteStudentCounter
     def keep_count_of association_counters
+      @counter_configs ||= []
+
       association_counters.each do |association_name, counter_class|
         # Find the association on this model
         association_reflection = reflect_on_association(association_name)
@@ -25,7 +27,9 @@ module Counter::Counters
 
         # Add the after_commit hook to the association's class
         association_class.include Counter::Countable
-        association_class.add_counted_by self, counter_class, association_name, inverse_association
+        config = Counter::CounterConfig.new self, counter_class, association_name, inverse_association.name
+        @counter_configs << config
+        association_class.add_counted_by config
 
         # Install the Rails callbacks if required
         association_class.after_commit do
@@ -33,6 +37,11 @@ module Counter::Counters
           association(inverse_association).counters.find_counter(counter_class).update it
         end
       end
+    end
+
+    # Returns a list of Counter::CounterConfigs
+    def counter_configs
+      @counter_configs || []
     end
   end
 end
