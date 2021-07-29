@@ -17,7 +17,7 @@ class Counter::Change < ApplicationRecord
   belongs_to :counter, class_name: "Counter::Value"
   validates_numericality_of :amount
 
-  scope :unreconciled, -> { where(reconciled_at: nil) }
+  scope :pending, -> { where(reconciled_at: nil) }
   scope :reconciled, -> { where.not(reconciled_at: nil) }
   scope :purgable, -> { reconciled.where(processed_at: 7.days.ago..) }
 end
