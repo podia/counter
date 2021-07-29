@@ -1,5 +1,5 @@
 class Counter::ReconciliationJob
-  include Sidekiq::Worker
+  # include Sidekiq::Worker
 
   def perform counter_id
     counter = Counter::Value.find(counter_id)
