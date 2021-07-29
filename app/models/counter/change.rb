@@ -2,12 +2,12 @@
 #
 # Table name: counter_changes
 #
-#  id               :bigint(8)        not null, primary key
+#  id               :integer          not null, primary key
+#  counter_value_id :integer          indexed
 #  amount           :integer
 #  processed_at     :datetime         indexed
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
-#  counter_value_id :bigint(8)        indexed
 #
 class Counter::Change < ApplicationRecord
   def self.table_name_prefix

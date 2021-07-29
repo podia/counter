@@ -2,13 +2,13 @@
 #
 # Table name: counter_values
 #
-#  id          :bigint(8)        not null, primary key
-#  parent_type :string           indexed => [parent_id]
+#  id          :integer          not null, primary key
 #  type        :string           indexed
 #  value       :integer          default(0)
+#  parent_type :string           indexed => [parent_id]
+#  parent_id   :integer          indexed => [parent_type]
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  parent_id   :bigint(8)        indexed => [parent_type]
 #
 class Counter::Value < ApplicationRecord
   def self.table_name_prefix

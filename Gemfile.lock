@@ -66,8 +66,12 @@ GEM
       minitest (>= 5.1)
       tzinfo (~> 2.0)
       zeitwerk (~> 2.3)
+    annotate (3.1.1)
+      activerecord (>= 3.2, < 7.0)
+      rake (>= 10.4, < 14.0)
     ast (2.4.2)
     builder (3.2.4)
+    byebug (11.1.3)
     concurrent-ruby (1.1.9)
     crass (1.0.6)
     erubi (1.10.0)
@@ -167,6 +171,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  annotate
+  byebug
   counter!
   sqlite3
   standardrb
