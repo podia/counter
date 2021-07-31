@@ -36,11 +36,38 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal "products", counter.name
     assert counter.persisted?
     assert_equal u, counter.parent
+    u.counters.find_counter!(ProductCounter, :products)
+    assert 1, Counter::Value.count
   end
 
   test "loads all counters" do
     u = User.create
     u.counters.create! type: ProductCounter, name: :products
     assert User.with_counters.first.counters.loaded?
+  end
+
+  test "increments the counter when an item is added" do
+    u = User.create
+    counter = u.counters.create! type: ProductCounter, name: :products
+    u.products.create!
+    assert_equal 1, counter.reload.value
+  end
+
+  test "decrements the counter when an item is destroy" do
+    u = User.create
+    product = u.products.create!
+    counter = u.counters.find_counter! ProductCounter, :products
+    assert_equal 1, counter.reload.value
+    product.destroy!
+    assert_equal 0, counter.reload.value
+  end
+
+  test "does not change the counter when an item is updated" do
+    u = User.create!
+    counter = u.counters.find_counter! ProductCounter, :products
+    product = u.products.create!
+    assert_equal 1, counter.reload.value
+    product.update! name: "new name"
+    assert_equal 1, counter.reload.value
   end
 end

@@ -2,13 +2,32 @@ module Counter::Countable
   extend ActiveSupport::Concern
 
   included do
-    after_commit :update_counter
-
-    def update_counters
-      counted_by.each do |parent_class, counter_class, association_name|
+    # Install the Rails callbacks if required
+    after_create_commit do
+      each_counter_to_update do |counter|
+        counter.add_item self
       end
-      # Find the counter
-      association(association_name).reader.counters(counter_name).increment!
+    end
+
+    after_update_commit do
+      each_counter_to_update do |counter|
+        counter.update_item self
+      end
+    end
+
+    after_destroy_commit do
+      each_counter_to_update do |counter|
+        counter.remove_item self
+      end
+    end
+
+    def each_counter_to_update
+      self.class.counted_by.each do |counter_config|
+        counter = association(counter_config.inverse_association)
+          .target.counters
+          .find_counter!(counter_config.counter_class, counter_config.association)
+        yield counter
+      end
     end
   end
 

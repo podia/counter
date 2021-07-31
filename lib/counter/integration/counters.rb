@@ -11,7 +11,7 @@ module Counter::Counters
       def find_counter! counter_class, name
         counter = proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
 
-        counter || Counter::Value.create!(parent: proxy_association.owner, type: counter_class, name: name)
+        counter || Counter::Value.create_or_find_by!(parent: proxy_association.owner, type: counter_class.name, name: name)
       end
     end
 
@@ -36,12 +36,6 @@ module Counter::Counters
         config = Counter::CounterConfig.new self, counter_class, association_name, inverse_association.name
         @counter_configs << config
         association_class.add_counted_by config
-
-        # Install the Rails callbacks if required
-        association_class.after_commit do
-          # Actually update the counter
-          association(inverse_association).counters.find_counter(counter_class).update it
-        end
       end
     end
 
