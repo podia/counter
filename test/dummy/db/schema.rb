@@ -24,11 +24,13 @@ ActiveRecord::Schema.define(version: 2021_07_29_221419) do
 
   create_table "counter_values", force: :cascade do |t|
     t.string "type"
+    t.string "name"
     t.integer "value", default: 0
     t.string "parent_type"
     t.integer "parent_id"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["name"], name: "index_counter_values_on_name"
     t.index ["parent_type", "parent_id"], name: "index_counter_values_on_parent"
     t.index ["type"], name: "index_counter_values_on_type"
   end
