@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_07_29_221419) do
+ActiveRecord::Schema.define(version: 2021_07_31_224504) do
 
   create_table "counter_changes", force: :cascade do |t|
     t.integer "counter_value_id"
@@ -31,6 +31,7 @@ ActiveRecord::Schema.define(version: 2021_07_29_221419) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["name"], name: "index_counter_values_on_name"
+    t.index ["parent_type", "parent_id", "type", "name"], name: "unique_counter_values", unique: true
     t.index ["parent_type", "parent_id"], name: "index_counter_values_on_parent"
     t.index ["type"], name: "index_counter_values_on_type"
   end
