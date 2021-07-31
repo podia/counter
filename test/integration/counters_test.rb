@@ -21,4 +21,26 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal :products, config.association
     assert_equal :user, config.inverse_association
   end
+
+  test "finds a counter" do
+    u = User.create
+    assert_nil u.counters.find_counter(ProductCounter, :products)
+    counter = u.counters.create! type: ProductCounter, name: :products
+    assert_equal counter, u.counters.find_counter(ProductCounter, :products)
+  end
+
+  test "finds or creates a counter" do
+    u = User.create
+    counter = u.counters.find_counter!(ProductCounter, :products)
+    assert_equal ProductCounter, counter.class
+    assert_equal "products", counter.name
+    assert counter.persisted?
+    assert_equal u, counter.parent
+  end
+
+  test "loads all counters" do
+    u = User.create
+    u.counters.create! type: ProductCounter, name: :products
+    assert User.with_counters.first.counters.loaded?
+  end
 end

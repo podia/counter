@@ -2,10 +2,16 @@ module Counter::Counters
   extend ActiveSupport::Concern
 
   included do
-    has_many :counters, dependent: :destroy do
+    has_many :counters, dependent: :destroy, class_name: "Counter::Value", as: :parent do
       # Something.counters.find_counter MyCounter
       def find_counter counter_class, name
-        proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name }
+        proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
+      end
+
+      def find_counter! counter_class, name
+        counter = proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
+
+        counter || Counter::Value.create!(parent: proxy_association.owner, type: counter_class, name: name)
       end
     end
 
