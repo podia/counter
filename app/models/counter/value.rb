@@ -24,7 +24,8 @@ class Counter::Value < ApplicationRecord
   include Counter::Configurable
   include Counter::Increment
   include Counter::Reset
-  include Counter::Hierarchical
   include Counter::Recalculatable
-  include Counter::Summable
+  # include Counter::Conditional
+  # include Counter::Hierarchical
+  # include Counter::Summable
 end

@@ -6,7 +6,7 @@ module Counter::Recalculatable
     with_lock do
       old_value = value
       new_value = count_by_sql
-      perform_update! old_value - new_value
+      perform_update! new_value - old_value
     end
   end
 
@@ -22,6 +22,8 @@ module Counter::Recalculatable
 
   # use this scope when recalculating the value
   def recalc_scope
+    return parent.send(config.counting_association) if config.present?
+
     raise NotImplementedException
   end
 end

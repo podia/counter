@@ -70,4 +70,22 @@ class CountersTest < ActiveSupport::TestCase
     product.update! name: "new name"
     assert_equal 1, counter.reload.value
   end
+
+  test "resets the counter " do
+    u = User.create
+    product = u.products.create!
+    counter = u.counters.find_counter! ProductCounter, :products
+    assert_equal 1, counter.reload.value
+    counter.reset!
+    assert_equal 0, counter.reload.value
+  end
+
+  test "an association counter can be recalculated" do
+    u = User.create!
+    u.products.create!
+    counter = u.counters.find_counter! ProductCounter, :products
+    counter.update! value: 0
+    counter.recalc!
+    assert_equal 1, counter.reload.value
+  end
 end
