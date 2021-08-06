@@ -12,4 +12,5 @@ class User < ApplicationRecord
 
   include Counter::Counters
   keep_count_of products: ProductCounter
+  keep_count_of orders: {counter: Counter::Value, column: :price}
 end

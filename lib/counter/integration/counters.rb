@@ -24,10 +24,18 @@ module Counter::Counters
 
   class_methods do
     # keep_count_of students: SiteStudentCounter
+    # keep_count_of orders: { counter: RevenueCounter, column: :price }
     def keep_count_of association_counters
       @counter_configs ||= []
 
       association_counters.each do |association_name, counter_class|
+        column_to_count = nil
+
+        if counter_class.is_a? Hash
+          column_to_count = counter_class[:column]
+          counter_class = counter_class[:counter]
+        end
+
         # Find the association on this model
         association_reflection = reflect_on_association(association_name)
         # Find the association classes
@@ -37,7 +45,7 @@ module Counter::Counters
         # Add the after_commit hook to the association's class
         association_class.include Counter::Countable
         # Provide the Countable class with details about where it's counted
-        config = Counter::AssociationCounter.new self, counter_class, association_name, countable_association.name
+        config = Counter::AssociationCounter.new self, counter_class, association_name, countable_association.name, column_to_count
         @counter_configs << config
         association_class.add_counted_by config
       end

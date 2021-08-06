@@ -5,23 +5,11 @@ module Counter::Summable
   extend ActiveSupport::Concern
 
   included do
-    def count_using attribute = nil, &block
-      @count_using_attribute = attribute
-      # TODO: Maybe remove the block and just call a method?
-      @count_using_block = block
-    end
-  end
+    # Replace Increment#increment_from_item
+    def increment_from_item item
+      return item.send config.column_to_count if config.sum?
 
-  def increment_from_item item
-    if @@count_using_block
-      instance_exec @@count_using_block
-    else
-      item.send @@count_using_attribute
+      1
     end
-  end
-
-  # TODO: Should only override this if Recalculatable
-  def count_by_sql
-    recalc_scope.sum(@@count_using)
   end
 end

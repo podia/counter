@@ -31,7 +31,7 @@ module Counter::Increment
       # By default, updating an items does not change the count
     end
 
-    ################################################## Hook for summable
+    # How much should we increment the counter
     def increment_from_item item
       1
     end
