@@ -7,8 +7,8 @@ class CountersTest < ActiveSupport::TestCase
     config = configs.first
     assert_equal ProductCounter, config.counter_class
     assert_equal User, config.parent_class
-    assert_equal :products, config.association
-    assert_equal :user, config.inverse_association
+    assert_equal :products, config.counting_association
+    assert_equal :user, config.countable_association
   end
 
   test "configures the counterable" do
@@ -18,8 +18,8 @@ class CountersTest < ActiveSupport::TestCase
     config = configs.first
     assert_equal ProductCounter, config.counter_class
     assert_equal User, config.parent_class
-    assert_equal :products, config.association
-    assert_equal :user, config.inverse_association
+    assert_equal :products, config.counting_association
+    assert_equal :user, config.countable_association
   end
 
   test "finds a counter" do

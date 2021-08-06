@@ -23,9 +23,9 @@ module Counter::Countable
 
     def each_counter_to_update
       self.class.counted_by.each do |counter_config|
-        counter = association(counter_config.inverse_association)
+        counter = association(counter_config.countable_association)
           .target.counters
-          .find_counter!(counter_config.counter_class, counter_config.association)
+          .find_counter!(counter_config.counter_class, counter_config.counting_association)
         yield counter
       end
     end

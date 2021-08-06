@@ -10,8 +10,11 @@ module Counter::Counters
 
       def find_counter! counter_class, name
         counter = proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
+        counter ||= Counter::Value.create_or_find_by!(parent: proxy_association.owner, type: counter_class.name, name: name)
 
-        counter || Counter::Value.create_or_find_by!(parent: proxy_association.owner, type: counter_class.name, name: name)
+        # Add the configuration for this counter to the instance
+        counter.config = proxy_association.owner.class.counter_configs.find { |c| c.match? proxy_association.owner.class, counter.class, name }
+        counter
       end
     end
 
@@ -29,11 +32,12 @@ module Counter::Counters
         association_reflection = reflect_on_association(association_name)
         # Find the association classes
         association_class = association_reflection.class_name.constantize
-        inverse_association = association_reflection.inverse_of
+        countable_association = association_reflection.inverse_of
 
         # Add the after_commit hook to the association's class
         association_class.include Counter::Countable
-        config = Counter::CounterConfig.new self, counter_class, association_name, inverse_association.name
+        # Provide the Countable class with details about where it's counted
+        config = Counter::AssociationCounter.new self, counter_class, association_name, countable_association.name
         @counter_configs << config
         association_class.add_counted_by config
       end

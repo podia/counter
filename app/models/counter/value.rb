@@ -21,9 +21,9 @@ class Counter::Value < ApplicationRecord
 
   validates_numericality_of :value
 
+  include Counter::Configurable
   include Counter::Increment
   include Counter::Reset
-  include Counter::Conditional
   include Counter::Hierarchical
   include Counter::Recalculatable
   include Counter::Summable
