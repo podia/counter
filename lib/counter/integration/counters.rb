@@ -47,7 +47,7 @@ module Counter::Counters
   class_methods do
     # counter ProductCounter
     # counter PremiumProductCounter, FreeProductCounter
-    def counter counter_definitions
+    def counter *counter_definitions
       @counter_configs ||= []
 
       counter_definitions = Array.wrap(counter_definitions)
@@ -72,7 +72,7 @@ module Counter::Counters
         definition.countable_model = association_class
 
         define_method definition.counter_name do
-          counters.find_by(name: definition.counter_value_name)
+          counters.find_counter(definition)
         end
 
         # Provide the Countable class with details about where it's counted

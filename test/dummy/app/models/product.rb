@@ -12,4 +12,6 @@
 class Product < ApplicationRecord
   belongs_to :user
   has_many :orders
+
+  scope :premium, -> { where("price >= 1000") }
 end

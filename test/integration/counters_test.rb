@@ -3,7 +3,7 @@ require "test_helper"
 class CountersTest < ActiveSupport::TestCase
   test "configures the counters on the parent model" do
     definitions = User.counter_configs
-    assert_equal 1, definitions.length
+    assert_equal 2, definitions.length
     definition = definitions.first
     assert_equal ProductCounter, definition
     assert_equal User, definition.model
@@ -14,7 +14,7 @@ class CountersTest < ActiveSupport::TestCase
   test "configures the thing being counted" do
     User
     definitions = Product.counted_by
-    assert_equal 1, definitions.length
+    assert_equal 2, definitions.length
     definition = definitions.first
     assert_equal ProductCounter, definition
     assert_equal User, definition.model

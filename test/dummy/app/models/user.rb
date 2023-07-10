@@ -10,7 +10,8 @@ class User < ApplicationRecord
   include Counter::Counters
 
   has_many :products
+  has_many :premium_products, -> { premium }, class_name: "Product"
   has_many :orders
 
-  counter ProductCounter
+  counter ProductCounter, PremiumProductCounter
 end
