@@ -7,10 +7,10 @@
 #  updated_at :datetime         not null
 #
 class User < ApplicationRecord
+  include Counter::Counters
+
   has_many :products
   has_many :orders
 
-  include Counter::Counters
-  keep_count_of products: ProductCounter
-  keep_count_of orders: {counter: Counter::Value, column: :price}
+  counter ProductCounter
 end
