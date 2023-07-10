@@ -19,18 +19,18 @@ module Counter::Increment
     end
 
     def add_item item
-      return unless accept_item?(item, :add)
+      # return unless accept_item?(item, :add)
       # Naive inline implementation: just increment the counter by one
       increment! by: increment_from_item(item)
     end
 
     def remove_item item
-      return unless accept_item?(item, :remove)
+      # return unless accept_item?(item, :remove)
       decrement! by: increment_from_item(item)
     end
 
     def update_item item
-      return unless accept_item?(item, :update)
+      # return unless accept_item?(item, :update)
       # By default, updating an items does not change the count
     end
 

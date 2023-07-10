@@ -22,7 +22,7 @@ class Counter::Value < ApplicationRecord
   validates_numericality_of :value
 
   include Counter::Definable
-  # include Counter::Increment
+  include Counter::Increment
   # include Counter::Reset
   # include Counter::Recalculatable
   # include Counter::Summable
