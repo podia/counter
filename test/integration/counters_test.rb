@@ -61,12 +61,12 @@ class CountersTest < ActiveSupport::TestCase
     assert User.with_counters.first.counters.loaded?
   end
 
-  # test "increments the counter when an item is added" do
-  #   u = User.create
-  #   counter = u.counters.create! type: ProductCounter, name: :products
-  #   u.products.create!
-  #   assert_equal 1, counter.reload.value
-  # end
+  test "do not blow up if a counter hasn't been created" do
+    u = User.create
+    # No counter for products has been created but this should
+    # still work
+    assert u.products.create!
+  end
 
   # test "decrements the counter when an item is destroy" do
   #   u = User.create

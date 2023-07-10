@@ -22,11 +22,10 @@ module Counter::Countable
     end
 
     def each_counter_to_update
-      self.class.counted_by.each do |counter_config|
-        counter = association(counter_config.countable_association)
-          .target.counters
-          .find_counter!(counter_config.counter_class, counter_config.counting_association)
-        yield counter
+      self.class.counted_by.each do |counter_definition|
+        counter = association(counter_definition.inverse_association)
+          .target.counters.find_or_create_counter!(counter_definition)
+        yield counter if counter
       end
     end
   end

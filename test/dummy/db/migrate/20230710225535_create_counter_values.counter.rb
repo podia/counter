@@ -1,3 +1,4 @@
+# This migration comes from counter (originally 20210705154113)
 class CreateCounterValues < ActiveRecord::Migration[6.1]
   def change
     create_table :counter_values do |t|
