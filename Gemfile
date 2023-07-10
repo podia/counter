@@ -6,8 +6,9 @@ gemspec
 
 group :development do
   gem "sqlite3"
-  gem "standardrb"
   gem "annotate"
+  gem "ruby-lsp-rails"
+  gem "standard"
 end
 
 group :test do
