@@ -34,8 +34,12 @@ module Counter::Definition
     end
 
     # Get the name of this counter e.g. user_products
-    def name
+    def counter_value_name
       "#{@model.name.underscore}-#{@association_name}"
+    end
+
+    def counter_name
+      "#{@association_name}_counter"
     end
 
     # Set the filters to be used

@@ -17,7 +17,7 @@ class Counter::Value < ApplicationRecord
   end
 
   belongs_to :parent, polymorphic: true, optional: true
-  has_many :updates, class_name: "Counter::Change", dependent: :delete_all
+  has_many :events, class_name: "Counter::Change", dependent: :delete_all
 
   validates_numericality_of :value
 

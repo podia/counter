@@ -3,7 +3,7 @@
 module Counter::Definable
   extend ActiveSupport::Concern
 
-  instance_methods do
+  included do
     # Fetch the definition for this counter
     def definition
       parent.class.counter_configs.find { |c| c.name }

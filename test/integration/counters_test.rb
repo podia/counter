@@ -11,7 +11,7 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal :user, definition.inverse_association
   end
 
-  test "configures the counterable" do
+  test "configures the thing being counted" do
     User
     definitions = Product.counted_by
     assert_equal 1, definitions.length
@@ -22,29 +22,44 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal :user, definition.inverse_association
   end
 
-  # test "finds a counter" do
-  #   u = User.create
-  #   assert_nil u.counters.find_counter(ProductCounter, :products)
-  #   counter = u.counters.create! type: ProductCounter, name: :products
-  #   assert_equal counter, u.counters.find_counter(ProductCounter, :products)
-  # end
+  test "find a counter by calling method name" do
+    u = User.create!
+    counter = u.counters.create! name: "user-products"
+    assert_equal Counter::Value, u.products_counter.class
+    assert_equal ProductCounter, u.products_counter.definition
+  end
 
-  # test "finds or creates a counter" do
-  #   u = User.create
-  #   counter = u.counters.find_counter!(ProductCounter, :products)
-  #   assert_equal ProductCounter, counter.class
-  #   assert_equal "products", counter.name
-  #   assert counter.persisted?
-  #   assert_equal u, counter.parent
-  #   u.counters.find_counter!(ProductCounter, :products)
-  #   assert 1, Counter::Value.count
-  # end
+  test "counter has a definition" do
+    u = User.create!
+    counter = u.counters.create! name: "user-products"
+    assert_equal ProductCounter, counter.definition
+  end
 
-  # test "loads all counters" do
-  #   u = User.create
-  #   u.counters.create! type: ProductCounter, name: :products
-  #   assert User.with_counters.first.counters.loaded?
-  # end
+  test "finds a counter" do
+    u = User.create!
+    assert_nil u.counters.find_counter(ProductCounter)
+    assert_nil u.counters.find_counter("user-products")
+    counter = u.counters.create! name: "user-products"
+    assert_equal counter, u.counters.find_counter("user-products")
+    assert_equal counter, u.counters.find_counter(ProductCounter)
+  end
+
+  test "finds or creates a counter" do
+    u = User.create!
+    counter = u.counters.find_or_create_counter!(ProductCounter)
+    assert_equal Counter::Value, counter.class
+    assert_equal "user-products", counter.name
+    assert counter.persisted?
+    assert_equal u, counter.parent
+    u.counters.find_counter(ProductCounter)
+    assert 1, Counter::Value.count
+  end
+
+  test "loads all counters" do
+    u = User.create
+    u.counters.create! name: "user-products"
+    assert User.with_counters.first.counters.loaded?
+  end
 
   # test "increments the counter when an item is added" do
   #   u = User.create

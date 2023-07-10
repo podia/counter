@@ -12,20 +12,33 @@ module Counter::Counters
   extend ActiveSupport::Concern
 
   included do
-    has_many :counters, dependent: :destroy, class_name: "Counter::Value", as: :parent
-    # do
-    #   # Something.counters.find_counter MyCounter
-    #   def find_counter counter_definition
-    #     proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
-    #   end
+    has_many :counters, dependent: :destroy, class_name: "Counter::Value", as: :parent do
+      # user.counters.find_counter ProductCounter
+      def find_counter counter
+        counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
+          counter.to_s
+        elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
+          counter.counter_value_name
+        else
+          counter.to_s
+        end
 
-    #   def find_counter! counter_definition
-    #     counter = proxy_association.target.find { |c| c.type == counter_class.name.to_s && c.name == name.to_s }
-    #     counter ||= Counter::Value.create_or_find_by!(parent: proxy_association.owner, type: counter_class.name, name: name)
+        find_by name: counter_name
+      end
 
-    #     counter
-    #   end
-    # end
+      # user.counters.find_counter ProductCounter
+      def find_or_create_counter! counter
+        counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
+          counter.to_s
+        elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
+          counter.counter_value_name
+        else
+          counter.to_s
+        end
+
+        Counter::Value.create_or_find_by!(parent: proxy_association.owner, name: counter_name)
+      end
+    end
 
     # could even be a default scope??
     scope :with_counters, -> { includes(:counters) }
@@ -57,6 +70,10 @@ module Counter::Counters
         definition.model = self
         definition.inverse_association = inverse_association.name
         definition.countable_model = association_class
+
+        define_method definition.counter_name do
+          counters.find_by(name: definition.counter_value_name)
+        end
 
         # Provide the Countable class with details about where it's counted
 

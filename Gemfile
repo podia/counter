@@ -16,4 +16,4 @@ group :test do
 end
 
 # To use a debugger
-gem "byebug", group: [:development, :test]
+gem "debug", group: [:development, :test]
