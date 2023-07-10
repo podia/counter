@@ -1,4 +1,4 @@
-module Counter::Hierarchical
+module Counter::Xhierarchical
   extend ActiveSupport::Concern
 
   ########################################################## Support hierarchy of counters
