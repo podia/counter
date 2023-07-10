@@ -21,10 +21,14 @@ module Counter::Countable
       end
     end
 
+    # Iterate over each counter that needs to be updated for this model
+    # expects a block that takes a counter as an argument
     def each_counter_to_update
+      # For each definition, find or create the counter on the parent
       self.class.counted_by.each do |counter_definition|
-        counter = association(counter_definition.inverse_association)
-          .target.counters.find_or_create_counter!(counter_definition)
+        parent_model = association(counter_definition.inverse_association)
+          .target
+        counter = parent_model.counters.find_or_create_counter!(counter_definition)
         yield counter if counter
       end
     end
