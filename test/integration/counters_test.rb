@@ -84,14 +84,14 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 0, counter.reload.value
   end
 
-  # test "does not change the counter when an item is updated" do
-  #   u = User.create!
-  #   counter = u.counters.find_counter! ProductCounter, :products
-  #   product = u.products.create!
-  #   assert_equal 1, counter.reload.value
-  #   product.update! name: "new name"
-  #   assert_equal 1, counter.reload.value
-  # end
+  test "does not change the counter when an item is updated" do
+    u = User.create!
+    product = u.products.create!
+    counter = u.counters.find_counter ProductCounter
+    assert_equal 1, counter.reload.value
+    product.update! name: "new name"
+    assert_equal 1, counter.reload.value
+  end
 
   # test "resets the counter " do
   #   u = User.create
