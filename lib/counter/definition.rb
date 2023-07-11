@@ -2,14 +2,14 @@
 #
 # class ProductCounter
 #   include Counter::Definition
+#   # This specifies the association we're counting
 #   count :products
-#   with Product # optional
 #   sum :price   # optional
 #   filters: {   # optional
-#   create: ->(product) { product.premium? }
-#   update: ->(product) { product.has_changed? :premium, to: :true }
-#   delete: ->(product) { product.premium? }
-#   scope: ->(product) { premium }
+#     create: ->(product) { product.premium? }
+#     update: ->(product) { product.has_changed? :premium, to: :true }
+#     delete: ->(product) { product.premium? }
+#   }
 # end
 module Counter::Definition
   extend ActiveSupport::Concern
@@ -42,16 +42,16 @@ module Counter::Definition
       "#{@association_name}_counter"
     end
 
-    # Set the filters to be used
-    def filters=filters
-      @filters = filters
-    end
+    # # Set the filters to be used
+    # def filters=filters
+    #   @filters = filters
+    # end
 
-    # Set the column we're summing
-    def sum= column_name
-      @column_name = column_name
-      @sum = true
-    end
+    # # Set the column we're summing
+    # def sum= column_name
+    #   @column_name = column_name
+    #   @sum = true
+    # end
   end
 
   def sum?
