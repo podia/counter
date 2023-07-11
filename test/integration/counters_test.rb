@@ -111,14 +111,15 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 0, counter.reload.value
   end
 
-  # test "an association counter can be recalculated" do
-  #   u = User.create!
-  #   u.products.create!
-  #   counter = u.counters.find_counter! ProductCounter, :products
-  #   counter.update! value: 0
-  #   counter.recalc!
-  #   assert_equal 1, counter.reload.value
-  # end
+  test "an association counter can be recalculated" do
+    u = User.create!
+    u.products.create! price: 1000
+    u.products.create! price: 10
+    counter = u.premium_products_counter
+    counter.update! value: 0
+    counter.recalc!
+    assert_equal 1, counter.reload.value
+  end
 
   # test "can sum a column value" do
   #   u = User.create!
