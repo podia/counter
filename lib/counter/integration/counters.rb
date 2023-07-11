@@ -72,7 +72,7 @@ module Counter::Counters
         definition.countable_model = association_class
 
         define_method definition.counter_name do
-          counters.find_counter(definition)
+          counters.find_or_create_counter!(definition)
         end
 
         # Provide the Countable class with details about where it's counted

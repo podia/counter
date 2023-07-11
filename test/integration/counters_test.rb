@@ -44,6 +44,15 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal counter, u.counters.find_counter(ProductCounter)
   end
 
+  test "adds a method for the counter" do
+    u = User.create!
+    counter = u.premium_products_counter
+    assert_equal 0, counter.value
+    assert_equal Counter::Value, counter.class
+    assert_equal "user-premium_products", counter.name
+    assert_equal PremiumProductCounter, counter.definition
+  end
+
   test "finds or creates a counter" do
     u = User.create!
     counter = u.counters.find_or_create_counter!(ProductCounter)
