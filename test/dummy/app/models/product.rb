@@ -20,6 +20,6 @@ class Product < ApplicationRecord
   counter OrderRevenueCounter
 
   def premium?
-    price >= 1000
+    (price || 0) >= 1000
   end
 end

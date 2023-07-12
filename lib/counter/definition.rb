@@ -25,6 +25,8 @@ module Counter::Definition
     attr_accessor :inverse_association
     # When using sum, set the column we're summing
     attr_accessor :column_to_count
+    # Conditionally count items using filters
+    attr_accessor :filters
 
     # Set the association we're counting
     def count association_name
@@ -55,6 +57,10 @@ module Counter::Definition
 
     def sum?
       column_to_count.present?
+    end
+
+    def conditional filters
+      @filters = filters
     end
   end
 end

@@ -26,6 +26,6 @@ class Counter::Value < ApplicationRecord
   include Counter::Reset
   include Counter::Recalculatable
   include Counter::Summable
-  # include Counter::Conditional
+  include Counter::Conditional
   # include Counter::Hierarchical
 end

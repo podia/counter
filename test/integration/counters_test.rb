@@ -146,6 +146,28 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 30, counter.value
   end
 
+  test "conditionally increments the counter" do
+    u = User.create!
+    Product.create! user: u, price: 100
+    assert_equal 0, u.premium_products_counter.value
+    product = Product.create! user: u, price: 1000
+    assert_equal 1, u.premium_products_counter.value
+    product.update! price: 1001
+    assert_equal 1, u.premium_products_counter.value
+    product.destroy
+    assert_equal 0, u.premium_products_counter.value
+  end
+
+  test "conditionally decrements the counter when updating" do
+    u = User.create!
+    product = Product.create! user: u, price: 1000
+    assert_equal 1, u.premium_products_counter.value
+    product.update! price: 100
+    assert_equal 0, u.premium_products_counter.value
+    product.destroy
+    assert_equal 0, u.premium_products_counter.value
+  end
+
   # test "included the Counter::Changed module only when filters are passed"
   # test "passing filters to the keep_count_of"
   # test "accept_item? with symbol"

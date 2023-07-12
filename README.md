@@ -42,6 +42,44 @@ FROM (
 WHERE counters.id = counter_id
 ```
 
+## Defining a conditional counter
+
+Consider this model that we'd like to count but we don't want to count all products, just the premium ones with a price >= 1000
+
+```ruby
+class Product < ApplicationRecord
+  include Counter::Counters
+  include Counter::Changable
+
+  belongs_to :user
+
+  scope :premium, -> { where("price >= 1000") }
+
+  def premium?
+    price >= 1000
+  end
+end
+```
+
+Here's the counter to do that:
+
+```ruby
+class PremiumProductCounter
+  include Counter::Definition
+
+  count :premium_products
+  conditional create: ->(product) { product.premium? },
+    update: ->(product) {
+      product.has_changed? :price,
+        from: ->(price) { price < 1000 },
+        to: ->(price) { price >= 1000 }
+    },
+    delete: ->(product) { product.premium? }
+end
+```
+
+What's to note here? First, we define the counter on a scoped association. This ensures that when we call `counter.recalc()` we will count the association. We also define filters that operate on the instance level. On `create` we only accept premium products. On `delete` we only accept premium products. On `update`, we only accept products that have changed from < 1000 to a price >= 1000.
+
 Todo:
 - How define a counter
 - How to define conditional counters
