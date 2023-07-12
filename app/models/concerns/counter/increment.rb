@@ -31,9 +31,10 @@ module Counter::Increment
     end
 
     def update_item item
-      return unless accept_item?(item, :update)
+      return unless definition.filters && definition.filters[:update]
 
-      # By default, updating an items does not change the count
+      change = definition.filters[:update].call item
+      increment! by: change * increment_from_item(item)
     end
 
     # How much should we increment the counter

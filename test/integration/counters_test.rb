@@ -167,9 +167,4 @@ class CountersTest < ActiveSupport::TestCase
     product.destroy
     assert_equal 0, u.premium_products_counter.value
   end
-
-  # test "included the Counter::Changed module only when filters are passed"
-  # test "passing filters to the keep_count_of"
-  # test "accept_item? with symbol"
-  # test "accept_item? with proc"
 end
