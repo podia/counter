@@ -161,6 +161,25 @@ You can also reset a counter by calling `reset`. Since counters are ActiveRecord
 Counter::Value.update value: 0
 ```
 
+## Verify a counter
+
+You might like to check if a counter is correct
+
+```ruby
+store.product_revenue.correct?
+```
+
+This will re-count / re-calculate the value and compare it to the current one. If you wish to recalculate the value when it's not correct:
+
+```ruby
+store.product_revenue #=>200
+store.product_revenue.reset!
+store.product_revenue #=>0
+store.product_revenue.correct? #=> false
+store.product_revenue.correct! #=> false
+store.product_revenue #=>200
+```
+
 Todo:
 - How define a counter
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
