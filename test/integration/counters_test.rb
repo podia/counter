@@ -127,24 +127,24 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 1, counter.reload.value
   end
 
-  # test "can sum a column value" do
-  #   u = User.create!
-  #   product = u.products.create!
-  #   3.times { u.orders.create! product: product, price: 10 }
-  #   counter = u.counters.find_counter! Counter::Value, :orders
-  #   assert_equal 30, counter.value
-  # end
+  test "can sum a column value" do
+    u = User.create!
+    product = u.products.create!
+    3.times { u.orders.create! product: product, price: 10 }
+    counter = product.order_revenue
+    assert_equal 30, counter.value
+  end
 
-  # test "can recalculate a sum" do
-  #   u = User.create!
-  #   product = u.products.create!
-  #   3.times { u.orders.create! product: product, price: 10 }
-  #   counter = u.counters.find_counter! Counter::Value, :orders
-  #   counter.reset!
-  #   assert_equal 0, counter.value
-  #   counter.recalc!
-  #   assert_equal 30, counter.value
-  # end
+  test "can recalculate a sum" do
+    u = User.create!
+    product = u.products.create!
+    3.times { u.orders.create! product: product, price: 10 }
+    counter = product.order_revenue
+    counter.reset!
+    assert_equal 0, counter.value
+    counter.recalc!
+    assert_equal 30, counter.value
+  end
 
   # test "included the Counter::Changed module only when filters are passed"
   # test "passing filters to the keep_count_of"

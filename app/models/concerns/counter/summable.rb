@@ -7,7 +7,7 @@ module Counter::Summable
   included do
     # Replace Increment#increment_from_item
     def increment_from_item item
-      return item.send config.column_to_count if config.sum?
+      return item.send definition.column_to_count if definition.sum?
 
       1
     end

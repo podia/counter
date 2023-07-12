@@ -23,6 +23,8 @@ module Counter::Definition
     attr_accessor :countable_model
     # Set the inverse association (i.e., from the products to the user)
     attr_accessor :inverse_association
+    # When using sum, set the column we're summing
+    attr_accessor :column_to_count
 
     # Set the association we're counting
     def count association_name
@@ -46,14 +48,13 @@ module Counter::Definition
       @counter_name || "#{@association_name}_counter"
     end
 
-    # # Set the column we're summing
-    # def sum= column_name
-    #   @column_name = column_name
-    #   @sum = true
-    # end
-  end
+    # Set the column we're summing
+    def sum column_name
+      @column_to_count = column_name
+    end
 
-  def sum?
-    column_to_count.present?
+    def sum?
+      column_to_count.present?
+    end
   end
 end
