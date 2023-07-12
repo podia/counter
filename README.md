@@ -5,23 +5,22 @@ By the time you need Rails counter_caches you probably have other needs too. You
 
 Counter is different from other solutions like Rails counter caches and counter_culture:
 
-- Counters are objects. This makes it possible for them to have an API that allows you to define them, reset, and recalculate them
-- Counters are persisted as an ActiveRecord model (_not_ a column)
+- Counters are objects. This makes it possible for them to have an API that allows you to define them, reset, and recalculate them. The definition of a counter is seperate from the value
+- Counters are persisted as a ActiveRecord models (_not_ a column of an existing model)
 - Incrementing counters can be safely performed in a background job via a change event/deferred reconciliation pattern
-- Avoids lock-contention found in other solutions. Firstly, by storing the value in another object we reduce the contention on the main e.g. User instance. By using the change event pattern, we batch perform the updates reducing the number of processes requiring a lock.
+- Avoids lock-contention found in other solutions. By storing the value in another object we reduce the contention on the main e.g. User instance. This is only a small improvement though. By using the background change event pattern, we can batch perform the updates reducing the number of processes requiring a lock.
 - Counters can also perform aggregation (e.g. sum of column values instead of counting rows)
 
 - [Counter](#counter)
   - [Main concepts](#main-concepts)
   - [Defining a conditional counter](#defining-a-conditional-counter)
-  - [Defining a counter that aggregates a value (e.g. sum of order revenue)](#defining-a-counter-that-aggregates-a-value-eg-sum-of-order-revenue)
+  - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
   - [Recalculating a counter](#recalculating-a-counter)
   - [Reset a counter](#reset-a-counter)
   - [Usage](#usage)
   - [Installation](#installation)
   - [Contributing](#contributing)
   - [License](#license)
-
 
 ## Main concepts
 
@@ -83,23 +82,39 @@ end
 Here's the counter to do that:
 
 ```ruby
-class PremiumProductCounter
-  include Counter::Definition
-
+class PremiumProductCounter < Counter::Definition
+  # Define the association we're counting
   count :premium_products
+
   conditional create: ->(product) { product.premium? },
+    delete: ->(product) { product.premium? },
     update: ->(product) {
-      product.has_changed? :price,
+      became_premium = product.has_changed? :price,
         from: ->(price) { price < 1000 },
         to: ->(price) { price >= 1000 }
-    },
-    delete: ->(product) { product.premium? }
+      return 1 if became_premium
+
+      became_not_premium = product.has_changed? :price,
+        from: ->(price) { price >= 1000 },
+        to: ->(price) { price < 1000 }
+      return -1 if became_not_premium
+
+      return 0
+    }
 end
 ```
 
-What's to note here? First, we define the counter on a scoped association. This ensures that when we call `counter.recalc()` we will count the association. We also define filters that operate on the instance level. On `create` we only accept premium products. On `delete` we only accept premium products. On `update`, we only accept products that have changed from < 1000 to a price >= 1000.
+There is a lot going on here!
 
-## Defining a counter that aggregates a value (e.g. sum of order revenue)
+First, we define the counter on a scoped association. This ensures that when we call `counter.recalc()` we will count using the association's SQL.
+
+We also define several filters that operate on the instance level, i.e. when we create/update/delete an instance. On `create` and `delete` we define a block to determine if the counter should be updated. In this case, we only increment the counter when a premium product is created, and only decrement it when a premium product is deleted.
+
+`update` is more complex because there are three scenarios: either a product has been updated to make it premium, downgrade from premium to some other state, or changed in a way we don't care about. We need to return `1` if the instance is now premium, but wasn't before; `-1` if it was premium but now isn't; and `0` if it's premium status hasn't changed.
+
+We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value"
+
+## Aggregating a value (e.g. sum of order revenue)
 
 Given an ActiveRecord model `Order`, we can count a storefront's revenue like so
 
@@ -148,13 +163,13 @@ Counter::Value.update value: 0
 
 Todo:
 - How define a counter
-- How to reset a counter
-- Rethink? How to define hierarchical counters. Just add Change records for each of them? Or are rollups a different concept?
-- Not implemented: How define time-based counters for analytics
-- Can we support floating point values?
-- Can we support other aggregations such as average? Would require storing a list of recent items. Or HLL?
+- Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
+- Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
+- Can we support floating point values? Sounds useful but don't have a use case for it right now. Would they need to be a different ActiveRecord table?
+- In a similar vein of supporting different value types, can we support HLL values? Instead of increment an integer we add the items hash to a HyperLogLog so we can count unique items. An example would be counting site visits in a time-based daily counter, then combine the daily counts and still obtain an estimated number of monthly _unique_ visits. Again, not sure if this is the same ActiveRecord model or something different.
+
 ## Usage
-You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it
+You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it. No one is this.
 
 ## Installation
 Add this line to your application's Gemfile:
@@ -166,11 +181,6 @@ gem 'counter'
 And then execute:
 ```bash
 $ bundle
-```
-
-Or install it yourself as:
-```bash
-$ gem install counter
 ```
 
 Install the model migrations:
