@@ -5,7 +5,7 @@ class CountersTest < ActiveSupport::TestCase
     definitions = User.counter_configs
     assert_equal 2, definitions.length
     definition = definitions.first
-    assert_equal ProductCounter, definition
+    assert_equal ProductCounter, definition.class
     assert_equal User, definition.model
     assert_equal :products, definition.association_name
     assert_equal :user, definition.inverse_association
@@ -16,7 +16,7 @@ class CountersTest < ActiveSupport::TestCase
     definitions = Product.counted_by
     assert_equal 2, definitions.length
     definition = definitions.first
-    assert_equal ProductCounter, definition
+    assert_kind_of ProductCounter, definition
     assert_equal User, definition.model
     assert_equal :products, definition.association_name
     assert_equal :user, definition.inverse_association
@@ -26,13 +26,13 @@ class CountersTest < ActiveSupport::TestCase
     u = User.create!
     counter = u.counters.create! name: "user-products"
     assert_equal Counter::Value, u.products_counter.class
-    assert_equal ProductCounter, u.products_counter.definition
+    assert_kind_of ProductCounter, u.products_counter.definition
   end
 
   test "counter has a definition" do
     u = User.create!
     counter = u.counters.create! name: "user-products"
-    assert_equal ProductCounter, counter.definition
+    assert_kind_of ProductCounter, counter.definition
   end
 
   test "finds a counter" do
@@ -50,7 +50,7 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 0, counter.value
     assert_equal Counter::Value, counter.class
     assert_equal "user-premium_products", counter.name
-    assert_equal PremiumProductCounter, counter.definition
+    assert_kind_of PremiumProductCounter, counter.definition
   end
 
   test "allows counters to configure the counter name" do

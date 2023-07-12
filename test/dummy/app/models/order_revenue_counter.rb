@@ -1,6 +1,4 @@
-class OrderRevenueCounter
-  include Counter::Definition
-
+class OrderRevenueCounter < Counter::Definition
   count :orders
   sum :price
   name :order_revenue

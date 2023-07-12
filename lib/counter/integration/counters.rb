@@ -18,7 +18,7 @@ module Counter::Counters
         counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
           counter.to_s
         elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
-          counter.counter_value_name
+          counter.instance.counter_value_name
         else
           counter.to_s
         end
@@ -30,8 +30,10 @@ module Counter::Counters
       def find_or_create_counter! counter
         counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
           counter.to_s
-        elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
+        elsif counter.is_a?(Counter::Definition)
           counter.counter_value_name
+        elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
+          counter.instance.counter_value_name
         else
           counter.to_s
         end
@@ -51,8 +53,8 @@ module Counter::Counters
       @counter_configs ||= []
 
       counter_definitions = Array.wrap(counter_definitions)
-
-      counter_definitions.each do |definition|
+      counter_definitions.each do |definition_class|
+        definition = definition_class.instance
         association_name = definition.association_name
 
         # Find the association on this model

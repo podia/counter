@@ -11,56 +11,55 @@
 #     delete: ->(product) { product.premium? }
 #   }
 # end
-module Counter::Definition
-  extend ActiveSupport::Concern
+class Counter::Definition
+  include Singleton
 
-  class_methods do
-    # Attributes set by Counters#counter integration:
+  # Attributes set by Counters#counter integration:
+  attr_accessor :association_name
+  # Set the model we're attached to (set by Counters#counter)
+  attr_accessor :model
+  # Set the thing we're counting (set by Counters#counter)
+  attr_accessor :countable_model
+  # Set the inverse association (i.e., from the products to the user)
+  attr_accessor :inverse_association
+  # When using sum, set the column we're summing
+  attr_accessor :column_to_count
+  # Conditionally count items using filters
+  attr_accessor :filters
+  attr_writer :counter_name
 
-    # Set the model we're attached to (set by Counters#counter)
-    attr_accessor :model
-    # Set the thing we're counting (set by Counters#counter)
-    attr_accessor :countable_model
-    # Set the inverse association (i.e., from the products to the user)
-    attr_accessor :inverse_association
-    # When using sum, set the column we're summing
-    attr_accessor :column_to_count
-    # Conditionally count items using filters
-    attr_accessor :filters
+  def sum?
+    column_to_count.present?
+  end
 
-    # Set the association we're counting
-    def count association_name
-      @association_name = association_name
-    end
+  def counter_name
+    @counter_name || "#{association_name}_counter"
+  end
 
-    def association_name
-      @association_name
-    end
+  # Get the name of this counter e.g. user_products
+  def counter_value_name
+    "#{model.name.underscore}-#{association_name}"
+  end
 
-    # Get the name of this counter e.g. user_products
-    def counter_value_name
-      "#{@model.name.underscore}-#{@association_name}"
-    end
+  # Set the association we're counting
+  def self.count association_name
+    instance.association_name = association_name
+  end
 
-    def name name
-      @counter_name = name.to_s
-    end
+  def self.association_name
+    instance.association_name
+  end
 
-    def counter_name
-      @counter_name || "#{@association_name}_counter"
-    end
+  def self.name name
+    instance.counter_name = name.to_s
+  end
 
-    # Set the column we're summing
-    def sum column_name
-      @column_to_count = column_name
-    end
+  # Set the column we're summing
+  def self.sum column_name
+    instance.column_to_count = column_name
+  end
 
-    def sum?
-      column_to_count.present?
-    end
-
-    def conditional filters
-      @filters = filters
-    end
+  def self.conditional filters
+    instance.filters = filters
   end
 end

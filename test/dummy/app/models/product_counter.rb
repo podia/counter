@@ -1,5 +1,3 @@
-class ProductCounter
-  include Counter::Definition
-
+class ProductCounter < Counter::Definition
   count :products
 end

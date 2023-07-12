@@ -1,6 +1,4 @@
-class PremiumProductCounter
-  include Counter::Definition
-
+class PremiumProductCounter < Counter::Definition
   count :premium_products
   conditional create: ->(product) { product.premium? },
     update: ->(product) {
