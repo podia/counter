@@ -38,14 +38,13 @@ module Counter::Definition
       "#{@model.name.underscore}-#{@association_name}"
     end
 
-    def counter_name
-      "#{@association_name}_counter"
+    def name name
+      @counter_name = name.to_s
     end
 
-    # # Set the filters to be used
-    # def filters=filters
-    #   @filters = filters
-    # end
+    def counter_name
+      @counter_name || "#{@association_name}_counter"
+    end
 
     # # Set the column we're summing
     # def sum= column_name

@@ -53,6 +53,12 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal PremiumProductCounter, counter.definition
   end
 
+  test "allows counters to configure the counter name" do
+    u = User.create!
+    product = Product.create! user: u
+    assert_equal "order_revenue", product.order_revenue.definition.counter_name
+  end
+
   test "finds or creates a counter" do
     u = User.create!
     counter = u.counters.find_or_create_counter!(ProductCounter)

@@ -10,8 +10,11 @@
 #  updated_at :datetime         not null
 #
 class Product < ApplicationRecord
+  include Counter::Counters
+
   belongs_to :user
   has_many :orders
 
   scope :premium, -> { where("price >= 1000") }
+  counter OrderRevenueCounter
 end
