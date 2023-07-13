@@ -26,6 +26,7 @@ class Counter::Definition
   attr_accessor :column_to_count
   # Conditionally count items using filters
   attr_accessor :filters
+  # Set the name of the counter (used as the method name)
   attr_writer :counter_name
 
   def sum?
@@ -46,19 +47,22 @@ class Counter::Definition
     instance.association_name = association_name
   end
 
+  # Get the name of the association we're counting
   def self.association_name
     instance.association_name
   end
 
+  # Set the name of the counter (used as the method name)
   def self.name name
     instance.counter_name = name.to_s
   end
 
-  # Set the column we're summing
+  # Set the column we're summing. Leave blank to count the number of items
   def self.sum column_name
     instance.column_to_count = column_name
   end
 
+  # Define a conditional filter
   def self.conditional filters
     instance.filters = filters
   end
