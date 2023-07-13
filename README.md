@@ -1,4 +1,5 @@
 # Counter
+
 Counting and aggregation library for Rails.
 
 By the time you need Rails counter_caches you probably have other needs too. You probably want to sum column values and you probably have enough throughput that updating a single column value will cause lock contention problems too.
@@ -60,6 +61,46 @@ FROM (
 WHERE counters.id = counter_id
 ```
 
+## Defining a counter
+
+Counters are defined in a seperate class using a small DSL.
+
+Given a `Store` with many `Order`s, it would be defined as…
+
+```ruby
+class OrderCounter < Counter::Definition
+  count :orders
+end
+
+class Store < ApplicationRecord
+  has_many :orders
+  counter OrderCounter
+end
+```
+
+First we define the counter class itself using `count` to specify the association we're counting, then "attach" it to the parent Store model.
+
+By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, use `name`
+
+```ruby
+class OrderCounter < Counter::Definition
+  count :orders
+  name :total_orders
+end
+
+store.total_orders
+```
+
+The counter's value with be stored as a `Counter::Value` with the name prefixed by the model name. e.g. `store_total_orders`
+
+## Accessing counter values
+
+Since counters are represented as objects, you need to call `value` on them to retrieve the count.
+
+```ruby
+store.total_orders        #=> Counter::Value
+store.total_orders.value  #=> 200
+```
 ## Defining a conditional counter
 
 Consider this model that we'd like to count but we don't want to count all products, just the premium ones with a price >= 1000
