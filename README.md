@@ -12,6 +12,7 @@ Counting and aggregation library for Rails.
   - [Recalculating a counter](#recalculating-a-counter)
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
+  - [TODO](#todo)
   - [Usage](#usage)
   - [Installation](#installation)
   - [Contributing](#contributing)
@@ -34,7 +35,7 @@ Counter is different from other solutions like Rails counter caches and counter_
 
 `Counter::Definition` defines what the counter is, what model it's connected to, what association it counts, how the count is performed etc. You create a subclass of `Counter::Definition` and call a few class methods to configure it. The definition is available through `counter.definition` for any counter value…
 
-`Counter::Value` is the value of a counter. So, for example, a User might have many Posts, so a User would have a `counters` association containing a `Counter::Value` for the number of posts. Counters can be accessed via their name `user.posts_counter` or via the counters method on the association `user.counters.find_counter PostCounter`
+`Counter::Value` is the value of a counter. So, for example, a User might have many Posts, so a User would have a `counters` association containing a `Counter::Value` for the number of posts. Counters can be accessed via their name `user.posts_counter` or via the `find_counter` method on the association, e.g. `user.counters.find_counter PostCounter`
 
 `Counter::Change` is a temporary record that records a change to a counter. Instead of updating a counter directly, which requires obtaining a lock on it to perform it safely and atomically, a new `Change` event is inserted into the table. On regular intervals, the `Counter::Value` is updated by incrementing the value by the sum of all outstanding changes. This requires much less frequent locks at the expense of eventual consistency.
 
@@ -87,7 +88,7 @@ end
 
 First we define the counter class itself using `count` to specify the association we're counting, then "attach" it to the parent Store model.
 
-By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, use `name`
+By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, pass a `as` parameter:
 
 ```ruby
 class OrderCounter < Counter::Definition
@@ -204,7 +205,7 @@ and access it like
 
 ## Recalculating a counter
 
-Counters have a habit of drifting over time, particularly if ActiveRecords hooks are run (e.g. with a pure SQL data migration) so you need a method of re-counting the metric. Counters make this easy because they are objects in their own right.
+Counters have a habit of drifting over time, particularly if ActiveRecords hooks aren't run (e.g. with a pure SQL data migration) so you need a method of re-counting the metric. Counters make this easy because they are objects in their own right.
 
 You could refresh a store's revenue stats with:
 
@@ -212,13 +213,14 @@ You could refresh a store's revenue stats with:
 store.order_revenue.recalc!
 ```
 
-this would use the definition of the counter, including any option to sum a column. In the case of conditional counters, they are expect to be attached to an association which match the conditions.
+this would use the definition of the counter, including any option to sum a column. In the case of conditional counters, they are expected to be attached to an association which matched the conditions so the recalculated count remains accurate.
 
 ## Reset a counter
 
 You can also reset a counter by calling `reset`. Since counters are ActiveRecord objects, you could also reset them using
 
 ```ruby
+store.order_revenue.reset
 Counter::Value.update value: 0
 ```
 
@@ -227,10 +229,10 @@ Counter::Value.update value: 0
 You might like to check if a counter is correct
 
 ```ruby
-store.product_revenue.correct?
+store.product_revenue.correct? #=> false
 ```
 
-This will re-count / re-calculate the value and compare it to the current one. If you wish to recalculate the value when it's not correct:
+This will re-count / re-calculate the value and compare it to the current one. If you wish to also update the value when it's not correct, use `correct!`:
 
 ```ruby
 store.product_revenue #=>200
@@ -241,15 +243,21 @@ store.product_revenue.correct! #=> false
 store.product_revenue #=>200
 ```
 
-Todo:
-- How define a counter
+---
+
+## TODO
+
+See the asociated project in Github but roughly I'm thinking:
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
 - Can we support floating point values? Sounds useful but don't have a use case for it right now. Would they need to be a different ActiveRecord table?
 - In a similar vein of supporting different value types, can we support HLL values? Instead of increment an integer we add the items hash to a HyperLogLog so we can count unique items. An example would be counting site visits in a time-based daily counter, then combine the daily counts and still obtain an estimated number of monthly _unique_ visits. Again, not sure if this is the same ActiveRecord model or something different.
+- Actually start running this in production for basic use cases
 
 ## Usage
-You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it. No one is this.
+No one has used this in production yet.
+
+You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it.
 
 ## Installation
 Add this line to your application's Gemfile:
