@@ -6,7 +6,7 @@ module Counter::Definable
   included do
     # Fetch the definition for this counter
     def definition
-      parent.class.counter_configs.find { |c| c.counter_value_name == name }
+      parent.class.counter_configs.find { |c| c.record_name == name }
     end
   end
 end

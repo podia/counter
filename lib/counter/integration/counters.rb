@@ -18,7 +18,7 @@ module Counter::Counters
         counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
           counter.to_s
         elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
-          counter.instance.counter_value_name
+          counter.instance.record_name
         else
           counter.to_s
         end
@@ -31,14 +31,14 @@ module Counter::Counters
         counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
           counter.to_s
         elsif counter.is_a?(Counter::Definition)
-          counter.counter_value_name
+          counter.record_name
         elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
-          counter.instance.counter_value_name
+          counter.instance.record_name
         else
           counter.to_s
         end
 
-        Counter::Value.create_or_find_by!(parent: proxy_association.owner, name: counter_name)
+        Counter::Value.find_or_initialize_by(parent: proxy_association.owner, name: counter_name)
       end
     end
 
@@ -73,7 +73,7 @@ module Counter::Counters
         definition.inverse_association = inverse_association.name
         definition.countable_model = association_class
 
-        define_method definition.counter_name do
+        define_method definition.method_name do
           counters.find_or_create_counter!(definition)
         end
 

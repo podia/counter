@@ -56,7 +56,7 @@ class CountersTest < ActiveSupport::TestCase
   test "allows counters to configure the counter name" do
     u = User.create!
     product = Product.create! user: u
-    assert_equal "order_revenue", product.order_revenue.definition.counter_name
+    assert_equal "order_revenue", product.order_revenue.definition.name
   end
 
   test "finds or creates a counter" do
@@ -64,7 +64,7 @@ class CountersTest < ActiveSupport::TestCase
     counter = u.counters.find_or_create_counter!(ProductCounter)
     assert_equal Counter::Value, counter.class
     assert_equal "user-products", counter.name
-    assert counter.persisted?
+    assert counter.new_record?
     assert_equal u, counter.parent
     u.counters.find_counter(ProductCounter)
     assert 1, Counter::Value.count
@@ -79,22 +79,31 @@ class CountersTest < ActiveSupport::TestCase
   test "do not blow up if a counter hasn't been created" do
     u = User.create
     # No counter for products has been created but this should
-    # still work
-    assert u.products.create!
+    # still work and return a new instance
+    assert u.products_counter.new_record?
+  end
+
+  test "define a global counter" do
+    definition = GlobalOrderCounter.instance
+    assert definition.global?
+    assert_equal "total_orders", definition.name
+    assert_kind_of Counter::Value, GlobalOrderCounter.counter
+    GlobalOrderCounter.counter.increment!
+    assert 1, GlobalOrderCounter.counter.value
   end
 
   test "increments the counter when an item is added" do
     u = User.create
-    counter = u.counters.find_or_create_counter! ProductCounter
     u.products.create!
-    assert_equal 1, counter.reload.value
+    counter = u.counters.find_or_create_counter! ProductCounter
+    assert_equal 1, counter.value
   end
 
   test "decrements the counter when an item is destroy" do
     u = User.create
-    counter = u.counters.find_or_create_counter! ProductCounter
     product = u.products.create!
-    assert_equal 1, counter.reload.value
+    counter = u.counters.find_or_create_counter! ProductCounter
+    assert_equal 1, counter.value
     product.destroy!
     assert_equal 0, counter.reload.value
   end

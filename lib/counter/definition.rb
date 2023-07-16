@@ -27,34 +27,46 @@ class Counter::Definition
   # Conditionally count items using filters
   attr_accessor :filters
   # Set the name of the counter (used as the method name)
-  attr_writer :counter_name
+  attr_accessor :method_name
+  attr_accessor :name
 
   def sum?
     column_to_count.present?
   end
 
-  def counter_name
-    @counter_name || "#{association_name}_counter"
+  def global?
+    model.nil? && association_name.nil?
   end
 
-  # Get the name of this counter e.g. user_products
-  def counter_value_name
+  # Access the counter value for global counters
+  def self.counter
+    raise "Unable to find counter instances via #{name}#counter. Use must use #{instance.model}#find_counter or #{instance.model}##{instance.counter_name}" unless instance.global?
+
+    Counter::Value.find_counter self
+  end
+
+  # What we record in Counter::Value#name
+  def record_name
+    return name if global?
     "#{model.name.underscore}-#{association_name}"
   end
 
   # Set the association we're counting
-  def self.count association_name
+  def self.count association_name, as: "#{association_name}_counter"
     instance.association_name = association_name
+    instance.name = as.to_s
+    # How the counter can be accessed e.g. counter.products_counter
+    instance.method_name = as.to_s
+  end
+
+  def self.global name = nil
+    name ||= name.underscore
+    instance.name = name.to_s
   end
 
   # Get the name of the association we're counting
   def self.association_name
     instance.association_name
-  end
-
-  # Set the name of the counter (used as the method name)
-  def self.name name
-    instance.counter_name = name.to_s
   end
 
   # Set the column we're summing. Leave blank to count the number of items

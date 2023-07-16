@@ -21,6 +21,21 @@ class Counter::Value < ApplicationRecord
 
   validates_numericality_of :value
 
+  def self.find_counter counter
+    counter_name = if counter.is_a?(String) || counter.is_a?(Symbol)
+      counter.to_s
+    elsif counter.is_a?(Class) && counter.ancestors.include?(Counter::Definition)
+      definition = counter.instance
+      raise "Unable to find counter #{definition.name} via Counter::Value.find_counter. Use must use #{definition.model}#find_counter}" unless definition.global?
+
+      counter.instance.record_name
+    else
+      counter.to_s
+    end
+
+    find_or_initialize_by name: counter_name
+  end
+
   include Counter::Definable
   include Counter::Increment
   include Counter::Reset

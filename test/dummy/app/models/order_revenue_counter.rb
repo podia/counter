@@ -1,5 +1,4 @@
 class OrderRevenueCounter < Counter::Definition
-  count :orders
+  count :orders, as: :order_revenue
   sum :price
-  name :order_revenue
 end

@@ -84,8 +84,7 @@ By default, the counter will be available as `<association>_counter`, e.g. `stor
 
 ```ruby
 class OrderCounter < Counter::Definition
-  count :orders
-  name :total_orders
+  count :orders, as: :total_orders
 end
 
 store.total_orders
@@ -101,6 +100,20 @@ Since counters are represented as objects, you need to call `value` on them to r
 store.total_orders        #=> Counter::Value
 store.total_orders.value  #=> 200
 ```
+
+## Anonymous counters
+
+Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes  but sometimes you just need a global counter that you can increment.
+
+```ruby
+class GlobalOrderCounter < Counter::Definition
+  global :my_custom_counter_name
+end
+
+GlobalOrderCounter.counter.value #=> 5
+GlobalOrderCounter.counter.increment! #=> 6
+```
+
 ## Defining a conditional counter
 
 Consider this model that we'd like to count but we don't want to count all products, just the premium ones with a price >= 1000
