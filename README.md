@@ -2,6 +2,21 @@
 
 Counting and aggregation library for Rails.
 
+- [Counter](#counter)
+  - [Main concepts](#main-concepts)
+  - [Defining a counter](#defining-a-counter)
+  - [Accessing counter values](#accessing-counter-values)
+  - [Anonymous counters](#anonymous-counters)
+  - [Defining a conditional counter](#defining-a-conditional-counter)
+  - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
+  - [Recalculating a counter](#recalculating-a-counter)
+  - [Reset a counter](#reset-a-counter)
+  - [Verify a counter](#verify-a-counter)
+  - [Usage](#usage)
+  - [Installation](#installation)
+  - [Contributing](#contributing)
+  - [License](#license)
+
 By the time you need Rails counter_caches you probably have other needs too. You probably want to sum column values and you probably have enough throughput that updating a single column value will cause lock contention problems too.
 
 Counter is different from other solutions like Rails counter caches and counter_culture:
@@ -12,18 +27,10 @@ Counter is different from other solutions like Rails counter caches and counter_
 - Avoids lock-contention found in other solutions. By storing the value in another object we reduce the contention on the main e.g. User instance. This is only a small improvement though. By using the background change event pattern, we can batch perform the updates reducing the number of processes requiring a lock.
 - Counters can also perform aggregation (e.g. sum of column values instead of counting rows)
 
-- [Counter](#counter)
-  - [Main concepts](#main-concepts)
-  - [Defining a conditional counter](#defining-a-conditional-counter)
-  - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
-  - [Recalculating a counter](#recalculating-a-counter)
-  - [Reset a counter](#reset-a-counter)
-  - [Usage](#usage)
-  - [Installation](#installation)
-  - [Contributing](#contributing)
-  - [License](#license)
 
 ## Main concepts
+
+![](docs/data_model.png)
 
 `Counter::Definition` defines what the counter is, what model it's connected to, what association it counts, how the count is performed etc. You create a subclass of `Counter::Definition` and call a few class methods to configure it. The definition is available through `counter.definition` for any counter value…
 
