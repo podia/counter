@@ -20,7 +20,7 @@ Counting and aggregation library for Rails.
 
 By the time you need Rails counter_caches you probably have other needs too. You probably want to sum column values and you probably have enough throughput that updating a single column value will cause lock contention problems too.
 
-Counter is different from other solutions like Rails counter caches and counter_culture:
+Counter is different from other solutions like [Rails counter caches](https://api.rubyonrails.org/classes/ActiveRecord/CounterCache/ClassMethods.html) and [counter_culture](https://github.com/magnusvk/counter_culture):
 
 - Counters are objects. This makes it possible for them to have an API that allows you to define them, reset, and recalculate them. The definition of a counter is seperate from the value
 - Counters are persisted as a ActiveRecord models (_not_ a column of an existing model)
@@ -248,6 +248,7 @@ store.product_revenue #=>200
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
+- Support callbacks/hooks for when a counter is incremented/decremented. This would allow us to do things like send a notification when a counter reaches a certain value or crosses a threshold.
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
 - Can we support floating point values? Sounds useful but don't have a use case for it right now. Would they need to be a different ActiveRecord table?
