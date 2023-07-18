@@ -81,6 +81,8 @@ class OrderCounter < Counter::Definition
 end
 
 class Store < ApplicationRecord
+  include Counter::Counters
+
   has_many :orders
   counter OrderCounter
 end
@@ -92,6 +94,7 @@ By default, the counter will be available as `<association>_counter`, e.g. `stor
 
 ```ruby
 class OrderCounter < Counter::Definition
+  include Counter::Counters
   count :orders, as: :total_orders
 end
 
@@ -182,6 +185,8 @@ Given an ActiveRecord model `Order`, we can count a storefront's revenue like so
 
 ```ruby
 class Store < ApplicationRecord
+  include Counter::Counters
+
   counter OrderRevenue
 end
 ```
