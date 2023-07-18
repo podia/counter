@@ -20,11 +20,18 @@ class ChangesTest < ActiveSupport::TestCase
     assert product.has_changed?(:price)
   end
 
-  test "changed from ANY to value" do
+  test "changed from ANY implicit to value" do
     user = User.create!
     product = Product.create! user: user, price: 1000
     product.update! price: 2000
     assert product.has_changed?(:price, to: 2000)
+  end
+
+  test "changed from ANY to value" do
+    user = User.create!
+    product = Product.create! user: user, price: 1000
+    product.update! price: 2000
+    assert product.has_changed?(:price, from: Counter::Any, to: 2000)
   end
 
   test "changed from value to ANY" do

@@ -1,6 +1,6 @@
 # Simple class to represent any value in the filters
 require "singleton"
 
-class Changable::Any
+class Counter::Any
   include Singleton
 end
