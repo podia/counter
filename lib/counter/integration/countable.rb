@@ -3,19 +3,19 @@ module Counter::Countable
 
   included do
     # Install the Rails callbacks if required
-    after_create_commit do
+    after_create do
       each_counter_to_update do |counter|
         counter.add_item self
       end
     end
 
-    after_update_commit do
+    after_update do
       each_counter_to_update do |counter|
         counter.update_item self
       end
     end
 
-    after_destroy_commit do
+    after_destroy do
       each_counter_to_update do |counter|
         counter.remove_item self
       end
