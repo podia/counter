@@ -4,6 +4,7 @@ require "counter/railtie"
 require "counter/integration/counters"
 require "counter/integration/countable"
 require "counter/any"
+require "counter/error"
 
 module Counter
   # Your code goes here...

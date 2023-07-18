@@ -63,6 +63,8 @@ module Counter::Counters
         association_class = association_reflection.class_name.constantize
         inverse_association = association_reflection.inverse_of
 
+        raise Counter::Error.new("#{association_name} must have an inverse_of specified to be used in #{definition_class.name}") if inverse_association.nil?
+
         # Add the after_commit hook to the association's class
         association_class.include Counter::Countable
         # association_class.include Counter::Changed
