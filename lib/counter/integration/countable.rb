@@ -28,6 +28,7 @@ module Counter::Countable
       self.class.counted_by.each do |counter_definition|
         parent_model = association(counter_definition.inverse_association)
           .target
+        next unless parent_model
         counter = parent_model.counters.find_or_create_counter!(counter_definition)
         yield counter if counter
       end
