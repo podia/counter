@@ -24,8 +24,9 @@ class Counter::Definition
   attr_accessor :inverse_association
   # When using sum, set the column we're summing
   attr_accessor :column_to_count
-  # Conditionally count items using filters
-  attr_accessor :filters
+  # Test if we should count items using conditions
+  attr_writer :conditions
+  attr_writer :conditional
   # Set the name of the counter (used as the method name)
   attr_accessor :method_name
   attr_accessor :name
@@ -38,6 +39,10 @@ class Counter::Definition
 
   def global?
     model.nil? && association_name.nil?
+  end
+
+  def conditional?
+    @conditional
   end
 
   # for global counter instances to find their definition
@@ -56,6 +61,11 @@ class Counter::Definition
   def record_name
     return name if global?
     "#{model.name.underscore}-#{association_name}"
+  end
+
+  def conditions
+    @conditions ||= {}
+    @conditions
   end
 
   def global_counters
@@ -88,7 +98,13 @@ class Counter::Definition
   end
 
   # Define a conditional filter
-  def self.conditional filters
-    instance.filters = filters
+  def self.on action, &block
+    instance.conditional = true
+
+    conditions = Counter::Conditions.new
+    conditions.instance_eval(&block)
+
+    instance.conditions[action] ||= []
+    instance.conditions[action] << conditions
   end
 end

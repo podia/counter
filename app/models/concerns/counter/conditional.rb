@@ -2,12 +2,31 @@ module Counter::Conditional
   extend ActiveSupport::Concern
 
   included do
-    def accept_item? item, on
-      return true unless definition.filters
-      filter = definition.filters[on]
-      return unless filter
+    def increment? item, on
+      accept_item? item, on, increment: true
+    end
 
-      filter.call item
+    def decrement? item, on
+      accept_item? item, on, increment: false
+    end
+
+    def accept_item? item, on, increment: true
+      return true unless definition.conditional?
+
+      conditions = definition.conditions[on]
+      return true unless conditions
+
+      conditions.any? do |conditions|
+        if increment
+          conditions.increment_conditions.any? do |condition|
+            return true if condition.call(item)
+          end
+        else
+          conditions.decrement_conditions.any? do |condition|
+            return true if condition.call(item)
+          end
+        end
+      end
     end
   end
 end

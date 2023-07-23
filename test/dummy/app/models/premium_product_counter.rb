@@ -1,18 +1,16 @@
 class PremiumProductCounter < Counter::Definition
   count :premium_products
-  conditional create: ->(product) { product.premium? },
-    delete: ->(product) { product.premium? },
-    update: ->(product) {
-      became_premium = product.has_changed? :price,
-        from: ->(price) { price < 1000 },
-        to: ->(price) { price >= 1000 }
-      return 1 if became_premium
 
-      became_not_premium = product.has_changed? :price,
-        from: ->(price) { price >= 1000 },
-        to: ->(price) { price < 1000 }
-      return -1 if became_not_premium
+  on :create do
+    increment_if ->(product) { product.premium? }
+  end
 
-      return 0
-    }
+  on :delete do
+    decrement_if ->(product) { product.premium? }
+  end
+
+  on :update do
+    increment_if ->(product) { product.has_changed? :price, from: ->(price) { price < 1000 }, to: ->(price) { price >= 1000 } }
+    decrement_if ->(product) { product.has_changed? :price, from: ->(price) { price >= 1000 }, to: ->(price) { price < 1000 } }
+  end
 end

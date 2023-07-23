@@ -153,21 +153,23 @@ class PremiumProductCounter < Counter::Definition
   # Define the association we're counting
   count :premium_products
 
-  conditional create: ->(product) { product.premium? },
-    delete: ->(product) { product.premium? },
-    update: ->(product) {
-      became_premium = product.has_changed? :price,
-        from: ->(price) { price < 1000 },
-        to: ->(price) { price >= 1000 }
-      return 1 if became_premium
+  on :create do
+    increment_if ->(product) { product.premium? }
+  end
 
-      became_not_premium = product.has_changed? :price,
-        from: ->(price) { price >= 1000 },
-        to: ->(price) { price < 1000 }
-      return -1 if became_not_premium
+  on :delete do
+    decrement_if ->(product) { product.premium? }
+  end
 
-      return 0
+  on :update do
+    increment_if ->(product) {
+      product.has_changed? :price, from: ->(price) { price < 1000 }, to: ->(price) { price >= 1000 }
     }
+
+    decrement_if ->(product) {
+      product.has_changed? :price, from: ->(price) { price >= 1000 }, to: ->(price) { price < 1000 }
+    }
+  end
 end
 ```
 
@@ -175,11 +177,11 @@ There is a lot going on here!
 
 First, we define the counter on a scoped association. This ensures that when we call `counter.recalc()` we will count using the association's SQL.
 
-We also define several filters that operate on the instance level, i.e. when we create/update/delete an instance. On `create` and `delete` we define a block to determine if the counter should be updated. In this case, we only increment the counter when a premium product is created, and only decrement it when a premium product is deleted.
+We also define several conditions that operate on the instance level, i.e. when we create/update/delete an instance. On `create` and `delete` we define a block to determine if the counter should be updated. In this case, we only increment the counter when a premium product is created, and only decrement it when a premium product is deleted.
 
-`update` is more complex because there are three scenarios: either a product has been updated to make it premium, downgrade from premium to some other state, or changed in a way we don't care about. We need to return `1` if the instance is now premium, but wasn't before; `-1` if it was premium but now isn't; and `0` if it's premium status hasn't changed.
+`update` is more complex because there are two scenarios: either a product has been updated to make it premium or  downgrade from premium to some other state. On update, we increment the counter if the price has gone above 1000; and decrement is the price has now gone below 1000.
 
-We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value"
+We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value" (Counter::Any.instance)
 
 ## Aggregating a value (e.g. sum of order revenue)
 
