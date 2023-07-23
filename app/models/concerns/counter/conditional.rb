@@ -19,11 +19,11 @@ module Counter::Conditional
       conditions.any? do |conditions|
         if increment
           conditions.increment_conditions.any? do |condition|
-            return true if condition.call(item)
+            condition.call(item)
           end
         else
           conditions.decrement_conditions.any? do |condition|
-            return true if condition.call(item)
+            condition.call(item)
           end
         end
       end
