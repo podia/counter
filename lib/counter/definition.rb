@@ -58,7 +58,7 @@ class Counter::Definition
     "#{model.name.underscore}-#{association_name}"
   end
 
- def global_counters
+  def global_counters
     @global_counters ||= []
     @global_counters
   end

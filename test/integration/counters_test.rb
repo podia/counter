@@ -12,7 +12,6 @@ class CountersTest < ActiveSupport::TestCase
   end
 
   test "configures the thing being counted" do
-    User
     definitions = Product.counted_by
     assert_equal 2, definitions.length
     definition = definitions.first
@@ -24,7 +23,7 @@ class CountersTest < ActiveSupport::TestCase
 
   test "find a counter by calling method name" do
     u = User.create!
-    counter = u.counters.create! name: "user-products"
+    u.counters.create! name: "user-products"
     assert_equal Counter::Value, u.products_counter.class
     assert_kind_of ProductCounter, u.products_counter.definition
   end
@@ -133,7 +132,7 @@ class CountersTest < ActiveSupport::TestCase
 
   test "resets the counter " do
     u = User.create
-    product = u.products.create!
+    u.products.create!
     counter = u.counters.find_counter ProductCounter
     assert_equal 1, counter.reload.value
     counter.reset!
