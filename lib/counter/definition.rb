@@ -32,6 +32,8 @@ class Counter::Definition
   attr_accessor :name
   # An array of all global counters
   attr_writer :global_counters
+  # An array of Proc to run when the counter changes
+  attr_writer :counter_hooks
 
   def sum?
     column_to_count.present?
@@ -73,6 +75,11 @@ class Counter::Definition
     @global_counters
   end
 
+  def counter_hooks
+    @counter_hooks ||= []
+    @counter_hooks
+  end
+
   # Set the association we're counting
   def self.count association_name, as: "#{association_name}_counter"
     instance.association_name = association_name
@@ -106,5 +113,9 @@ class Counter::Definition
 
     instance.conditions[action] ||= []
     instance.conditions[action] << conditions
+  end
+
+  def self.after_change block
+    instance.counter_hooks << block
   end
 end
