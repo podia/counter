@@ -1,5 +1,7 @@
 # Counter
 
+[![Tests](https://github.com/podia/counter/actions/workflows/ruby.yml/badge.svg)](https://github.com/podia/counter/actions/workflows/ruby.yml)
+
 Counting and aggregation library for Rails.
 
 - [Counter](#counter)
