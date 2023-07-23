@@ -14,6 +14,7 @@ Counting and aggregation library for Rails.
   - [Recalculating a counter](#recalculating-a-counter)
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
+  - [Hooks](#hooks)
   - [TODO](#todo)
   - [Usage](#usage)
   - [Installation](#installation)
@@ -254,12 +255,29 @@ store.product_revenue.correct! #=> false
 store.product_revenue #=>200
 ```
 
+## Hooks
+
+You can add an `after_change` hook to your counter definition to perform some action when the counter is updated. For example, you might want to send a notification when a counter reaches a certain value.
+
+```ruby
+class OrderRevenueCounter < Counter::Definition
+  count :orders, as: :order_revenue
+  sum :price
+
+  after_change :send_congratulations_email
+
+  def send_congratulations_email counter, from, to
+    return unless from < 1000 && to >= 1000
+    send_email "Congratulations! You've made #{to} dollars!"
+  end
+end
+```
+
 ---
 
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
-- Support callbacks/hooks for when a counter is incremented/decremented. This would allow us to do things like send a notification when a counter reaches a certain value or crosses a threshold.
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
 - Can we support floating point values? Sounds useful but don't have a use case for it right now. Would they need to be a different ActiveRecord table?

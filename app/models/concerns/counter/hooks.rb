@@ -3,7 +3,7 @@ module Counter::Hooks
   extend ActiveSupport::Concern
 
   included do
-    after_update :call_counter_hooks
+    after_save :call_counter_hooks
 
     def call_counter_hooks
       return unless previous_changes["value"]
