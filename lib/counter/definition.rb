@@ -34,6 +34,8 @@ class Counter::Definition
   attr_writer :global_counters
   # An array of Proc to run when the counter changes
   attr_writer :counter_hooks
+  # An array of all global counters
+  attr_writer :global_counters
 
   def sum?
     column_to_count.present?
@@ -78,6 +80,11 @@ class Counter::Definition
   def counter_hooks
     @counter_hooks ||= []
     @counter_hooks
+  end
+
+  def global_counters
+    @global_counters ||= []
+    @global_counters
   end
 
   # Set the association we're counting
