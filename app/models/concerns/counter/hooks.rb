@@ -10,7 +10,7 @@ module Counter::Hooks
 
       from, to = previous_changes["value"]
       definition.counter_hooks.each do |hook|
-        hook.call self, from, to
+        definition.send(hook, self, from, to)
       end
     end
   end
