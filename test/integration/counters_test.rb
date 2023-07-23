@@ -90,6 +90,7 @@ class CountersTest < ActiveSupport::TestCase
     assert_kind_of Counter::Value, GlobalOrderCounter.counter
     GlobalOrderCounter.counter.increment!
     assert 1, GlobalOrderCounter.counter.value
+    assert GlobalOrderCounter.instance, GlobalOrderCounter.counter.definition
   end
 
   test "increments the counter when an item is added" do
