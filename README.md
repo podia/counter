@@ -183,7 +183,7 @@ We also define several conditions that operate on the instance level, i.e. when 
 
 We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value" (Counter::Any.instance)
 
-Conditional counters work best with a single attribute. If the counter is conditional on e.g. confirmed and subscribed, the update tracking logic becomes very complex especially if the values are both updated at the same time. The solution to this is hopefully Rails generated columns in 7.1 so you can store a "subscribed_and_confirmed" column and check the value of that instead. Not entirely sure if/how Rails change tracking works with generated columns though.
+Conditional counters work best with a single attribute. If the counter is conditional on e.g. confirmed and subscribed, the update tracking logic becomes very complex especially if the values are both updated at the same time. The solution to this is hopefully Rails generated columns in 7.1 so you can store a "subscribed_and_confirmed" column and check the value of that instead. Rails dirty tracking will need to work with generated columns though; see [this PR](https://github.com/rails/rails/pull/48628).
 
 ## Aggregating a value (e.g. sum of order revenue)
 
