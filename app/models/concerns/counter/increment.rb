@@ -19,22 +19,25 @@ module Counter::Increment
     end
 
     def add_item item
-      return unless accept_item?(item, :create)
+      return unless increment?(item, :create)
 
       increment! by: increment_from_item(item)
     end
 
     def remove_item item
-      return unless accept_item?(item, :delete)
+      return unless decrement?(item, :delete)
 
       decrement! by: increment_from_item(item)
     end
 
     def update_item item
-      return unless definition.filters && definition.filters[:update]
+      if increment?(item, :update)
+        increment! by: increment_from_item(item)
+      end
 
-      change = definition.filters[:update].call item
-      increment! by: change * increment_from_item(item)
+      if decrement?(item, :update)
+        decrement! by: increment_from_item(item)
+      end
     end
 
     # How much should we increment the counter
