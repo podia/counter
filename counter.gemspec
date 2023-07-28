@@ -1,7 +1,7 @@
 require_relative "lib/counter/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "counter"
+  spec.name = "counter_records"
   spec.version = Counter::VERSION
   spec.authors = ["Jamie Lawrence"]
   spec.email = ["jamie@ideasasylum.com"]
