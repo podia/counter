@@ -6,8 +6,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Jamie Lawrence"]
   spec.email = ["jamie@ideasasylum.com"]
   spec.homepage = "https://github.com/podia/counter"
-  spec.summary = "Counters for counting"
-  spec.description = ""
+  spec.summary = "Counters and the counting counters that count them"
+  spec.description = "Counting and aggregation library for Rails."
   spec.license = "MIT"
 
   spec.metadata["homepage_uri"] = spec.homepage
