@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    counter_records (0.1.0)
+    counterwise (0.1.0)
       rails (~> 7)
 
 GEM
@@ -224,7 +224,7 @@ PLATFORMS
 
 DEPENDENCIES
   annotate
-  counter_records!
+  counterwise!
   debug
   minitest-reporters
   ruby-lsp-rails
