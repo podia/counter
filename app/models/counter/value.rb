@@ -36,6 +36,7 @@ class Counter::Value < ApplicationRecord
   end
 
   include Counter::Definable
+  include Counter::Hooks
   include Counter::Increment
   include Counter::Reset
   include Counter::Recalculatable
