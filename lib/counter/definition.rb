@@ -34,8 +34,8 @@ class Counter::Definition
   attr_writer :global_counters
   # An array of Proc to run when the counter changes
   attr_writer :counter_hooks
-  # An array of all global counters
-  attr_writer :global_counters
+  # An array of columns that should raise an error if update_column is called
+  attr_accessor :raisable_columns
 
   def sum?
     column_to_count.present?
@@ -82,11 +82,6 @@ class Counter::Definition
     @counter_hooks
   end
 
-  def global_counters
-    @global_counters ||= []
-    @global_counters
-  end
-
   # Set the association we're counting
   def self.count association_name, as: "#{association_name}_counter"
     instance.association_name = association_name
@@ -124,5 +119,12 @@ class Counter::Definition
 
   def self.after_change block
     instance.counter_hooks << block
+  end
+
+  # Prevent calling update_column on these columns
+  def self.raise_on_update_column *columns
+    columns ||= []
+    columns = columns.map(&:to_sym)
+    instance.raisable_columns = columns
   end
 end

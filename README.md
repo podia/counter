@@ -15,6 +15,7 @@ Counting and aggregation library for Rails.
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
   - [Hooks](#hooks)
+  - [Protecting the counter](#protecting-the-counter)
   - [TODO](#todo)
   - [Usage](#usage)
   - [Installation](#installation)
@@ -272,6 +273,22 @@ class OrderRevenueCounter < Counter::Definition
   end
 end
 ```
+
+## Protecting the counter
+
+Some ActiveRecord methods like `update_column` won't invoke the callbacks that Counterwise needs to update your counter. These bugs are extremely hard to track down so let's make it easier on ourselves.
+
+```ruby
+class PremiumProductCounter < Counter::Definition
+  # Define the association we're counting
+  count :premium_products
+  raise_on_update_column :price
+
+  #...
+end
+```
+
+Now, anytime we call `update_column` or `update_columns` on the price column, we'll raise a Counter::Error. This will help us track down the bug and fix it. This only occurs in development and test environments. If you wish to avoid all uses of update_column, regardless of the column being updated, just call `raise_on_update_column` without any arguments.
 
 ---
 

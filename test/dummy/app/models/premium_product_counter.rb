@@ -1,5 +1,6 @@
 class PremiumProductCounter < Counter::Definition
   count :premium_products
+  raise_on_update_column :price
 
   on :create do
     increment_if ->(product) { product.premium? }

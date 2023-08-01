@@ -206,4 +206,24 @@ class CountersTest < ActiveSupport::TestCase
       u.orders.create! product: product, price: 500
     end
   end
+
+  test "prevents calling update_column on a any column" do
+    u = User.create!
+    product = u.products.create! price: 100
+    order = u.orders.create! product: product, price: 100
+
+    assert_raise Counter::Error do
+      order.update_column :created_at, Time.now
+    end
+  end
+
+  test "prevents calling update_column on a specific column" do
+    u = User.create!
+    product = u.products.create! price: 100
+    product.update_column :name, "New name" # This shouldn't raise an error
+
+    assert_raise Counter::Error do
+      product.update_column :price, 1500
+    end
+  end
 end

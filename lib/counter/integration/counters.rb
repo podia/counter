@@ -79,10 +79,23 @@ module Counter::Counters
           counters.find_or_create_counter!(definition)
         end
 
-        # Provide the Countable class with details about where it's counted
-
         @counter_configs << definition
+
+        # Provide the Countable class with details about where it's counted
         association_class.add_counted_by definition
+
+        if definition.raisable_columns
+          # Prevent the countable class from having update_columns called on it in dev/test
+          if Rails.env.development? || Rails.env.test?
+            association_class.define_method :update_columns do |attributes|
+              if definition.raisable_columns.empty? || (definition.raisable_columns & attributes.symbolize_keys.keys).any?
+                raise Counter::Error.new "WARNING: #{self.class.name}#update_columns is called and won't update the counter #{definition.name}"
+              end
+
+              super(attributes)
+            end
+          end
+        end
       end
     end
 

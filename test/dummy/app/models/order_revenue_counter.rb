@@ -1,6 +1,7 @@
 class OrderRevenueCounter < Counter::Definition
   count :orders, as: :order_revenue
   sum :price
+  raise_on_update_column
 
   after_change :send_congratulations_email
 
