@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    counterwise (0.1.0)
+    counterwise (0.1.1)
       rails (~> 7)
 
 GEM
