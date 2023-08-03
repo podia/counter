@@ -15,6 +15,7 @@ Counting and aggregation library for Rails.
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
   - [Hooks](#hooks)
+  - [Testing the counters in production](#testing-the-counters-in-production)
   - [TODO](#todo)
   - [Usage](#usage)
   - [Installation](#installation)
@@ -270,6 +271,29 @@ class OrderRevenueCounter < Counter::Definition
     return unless from < 1000 && to >= 1000
     send_email "Congratulations! You've made #{to} dollars!"
   end
+end
+```
+
+## Testing the counters in production
+
+It may be useful to verify the accuracy of the counters in production, especially if you are concerned about conditional counters etc causing counter drift over time.
+
+This form of script takes a sampling approach suitable for large collections. It will randomly select a record and verify that the counter value is correct; if it's not, it stops giving you a chance to investigate.
+
+```ruby
+site_range = Site.minimum(:id)..Site.maximum(:id)
+
+1000.times do
+  random_id = rand(site_range)
+  site = Site.where("id >= ?", random_id).limit(1).first
+  next if site.nil?
+  if site.confirmed_subscribers_counter.correct?
+    puts "✅ site #{site.id} has correct counter value"
+  else
+    puts "❌ site #{site.id} has incorrect counter value. Expected #{site.confirmed_subscribers_counter.value} but got #{site.confirmed_subscribers_counter.count_by_sql}"
+    break
+  end
+  sleep 0.1
 end
 ```
 
