@@ -26,8 +26,9 @@ module Counter::Countable
     def each_counter_to_update
       # For each definition, find or create the counter on the parent
       self.class.counted_by.each do |counter_definition|
-        parent_model = association(counter_definition.inverse_association)
-          .target
+        parent_association = association(counter_definition.inverse_association)
+        parent_association.load_target unless parent_association.loaded?
+        parent_model = parent_association.target
         next unless parent_model
         counter = parent_model.counters.find_or_create_counter!(counter_definition)
         yield counter if counter

@@ -108,6 +108,15 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 0, counter.reload.value
   end
 
+  test "decrements the counter when an newly-loaded item is destroy" do
+    u = User.create
+    product = u.products.create!
+    # Reloading the product means the user association is no longer loaded
+    product.reload
+    product.destroy!
+    assert_equal 0, u.products_counter.reload.value
+  end
+
   test "does not change the counter when an item is updated" do
     u = User.create!
     product = u.products.create!
@@ -186,6 +195,12 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 1, u.premium_products_counter.value
     product.update! price: 100
     assert_equal 0, u.premium_products_counter.value
+  end
+
+  test "conditionally decrements the counter when deleting" do
+    u = User.create!
+    product = Product.create! user: u, price: 1000
+    assert_equal 1, u.premium_products_counter.value
     product.destroy
     assert_equal 0, u.premium_products_counter.value
   end
