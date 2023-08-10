@@ -34,6 +34,10 @@ class Counter::Definition
   attr_writer :global_counters
   # An array of Proc to run when the counter changes
   attr_writer :counter_hooks
+  # The counters this calculated counter depends on
+  attr_writer :dependent_counters
+  # The block to call to calculate the counter
+  attr_accessor :calculated_from
 
   def sum?
     column_to_count.present?
@@ -45,6 +49,10 @@ class Counter::Definition
 
   def conditional?
     @conditional
+  end
+
+  def calculated?
+    !@calculate_block.nil?
   end
 
   # for global counter instances to find their definition
@@ -81,6 +89,11 @@ class Counter::Definition
     @counter_hooks
   end
 
+  def dependent_counters
+    @dependent_counters ||= []
+    @dependent_counters
+  end
+
   # Set the association we're counting
   def self.count association_name, as: "#{association_name}_counter"
     instance.association_name = association_name
@@ -93,6 +106,26 @@ class Counter::Definition
     name ||= name.underscore
     instance.name = name.to_s
     Counter::Definition.instance.global_counters << instance
+  end
+
+  def self.calculated_from *dependent_counters, &block
+    instance.dependent_counters = dependent_counters
+    instance.calculated_from = block
+
+    dependent_counters.each do |dependent_counter|
+      # Install after_change hooks on the dependent counters
+      dependent_counter.after_change :update_calculated_counters
+      dependent_counter.define_method :update_calculated_counters do |counter, _old_value, _new_value|
+        # Fetch all the counters which depend on this one
+        calculated_counters = counter.parent.class.counter_configs.select { |c|
+          c.dependent_counters.include?(counter.definition.class)
+        }
+
+        calculated_counters = calculated_counters.map { |c| counter.parent.counters.find_or_create_counter!(c) }
+        # calculate the new values
+        calculated_counters.each(&:calculate!)
+      end
+    end
   end
 
   # Get the name of the association we're counting
