@@ -75,6 +75,29 @@ module Counter::Counters
         definition.inverse_association = inverse_association.name
         definition.countable_model = association_class
 
+        scope :with_counter_data_from, ->(*counter_classes) {
+          subqueries = ["#{table_name}.*"]
+          counter_classes.each do |counter_class|
+            sql = Counter::Value.select("value")
+              .where("parent_id = #{table_name}.id AND parent_type = '#{name}' AND name = '#{counter_class.instance.record_name}'").to_sql
+            subqueries << "(#{sql}) AS #{counter_class.instance.name}_data"
+          end
+          select(subqueries)
+        }
+
+        # Expects a hash of counter classes and directions, like so:
+        # order_by_counter ProductCounter => :desc, PremiumProductCounter => :asc
+        scope :order_by_counter, ->(order_hash) {
+          counter_classes = order_hash.keys
+          order_params = {}
+          order_hash.map do |counter_class, direction|
+            order_params["#{counter_class.instance.name}_data"] = direction
+          end
+          with_counter_data_from(*counter_classes).order(order_params)
+        }
+
+        scope :with_counters, -> { includes(:counters) }
+
         define_method definition.method_name do
           counters.find_or_create_counter!(definition)
         end
