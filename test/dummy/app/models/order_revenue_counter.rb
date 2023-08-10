@@ -6,6 +6,6 @@ class OrderRevenueCounter < Counter::Definition
 
   def send_congratulations_email counter, from, to
     return unless from < 1000 && to >= 1000
-    puts "Congratulations! You've made #{to} dollars!"
+    puts "Congratulations! You've made #{to.to_i} dollars!"
   end
 end
