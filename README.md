@@ -41,38 +41,6 @@ Counter is different from other solutions like [Rails counter caches](https://ap
 
 `Counter::Value` is the value of a counter. So, for example, a User might have many Posts, so a User would have a `counters` association containing a `Counter::Value` for the number of posts. Counters can be accessed via their name `user.posts_counter` or via the `find_counter` method on the association, e.g. `user.counters.find_counter PostCounter`
 
-`Counter::Change` is a temporary record that records a change to a counter. Instead of updating a counter directly, which requires obtaining a lock on it to perform it safely and atomically, a new `Change` event is inserted into the table. On regular intervals, the `Counter::Value` is updated by incrementing the value by the sum of all outstanding changes. This requires much less frequent locks at the expense of eventual consistency.
-
-For example, you might have many background jobs running concurrently, inserting hundreds/thousands of rows. The would not need to fight for a lock to update the counter and would only need to insert Counter::Change rows. The counter would then be updated, in a single operation, by summing all the persisted change values.
-
-Basically updating a counter value requires this SQL:
-
-```sql
-UPDATE counter_values
--- Update the counter with the sum of pending changes
-SET value = value + changes.sum
-FROM (
-  -- Find the pending changes for the counter
-  SELECT sum(value) as sum
-  FROM counter_changes
-  WHERE counter_id = 100
-) as changes
-WHERE id = 100
-```
-
-Or even reconcile all pending counters in a single statement:
-
-```sql
-UPDATE counter_values
-SET value = value + changes.sum
-FROM (
-  SELECT sum(value)
-  FROM counter_changes
-  GROUP BY counter_id
-) as changes
-WHERE counters.id = counter_id
-```
-
 ## Defining a counter
 
 Counters are defined in a seperate class using a small DSL.
@@ -302,6 +270,7 @@ end
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
+- Implement the background job pattern for incrementing counters
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
 - In a similar vein of supporting different value types, can we support HLL values? Instead of increment an integer we add the items hash to a HyperLogLog so we can count unique items. An example would be counting site visits in a time-based daily counter, then combine the daily counts and still obtain an estimated number of monthly _unique_ visits. Again, not sure if this is the same ActiveRecord model or something different.
