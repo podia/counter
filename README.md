@@ -8,7 +8,7 @@ Counting and aggregation library for Rails.
   - [Main concepts](#main-concepts)
   - [Defining a counter](#defining-a-counter)
   - [Accessing counter values](#accessing-counter-values)
-  - [Anonymous counters](#anonymous-counters)
+  - [Global counters](#global-counters)
   - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
   - [Recalculating a counter](#recalculating-a-counter)
@@ -94,18 +94,19 @@ end
 
 First we define the counter class itself using `count` to specify the association we're counting, then "attach" it to the parent Store model.
 
-By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, pass a `as` parameter:
+By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, use the `as` method:
 
 ```ruby
 class OrderCounter < Counter::Definition
   include Counter::Counters
-  count :orders, as: :total_orders
+  count :orders
+  as :total_orders
 end
 
 store.total_orders
 ```
 
-The counter's value with be stored as a `Counter::Value` with the name prefixed by the model name. e.g. `store_total_orders`
+The counter's value with be stored as a `Counter::Value` with the name prefixed by the model name. e.g. `store-total_orders`
 
 ## Accessing counter values
 
@@ -116,13 +117,13 @@ store.total_orders        #=> Counter::Value
 store.total_orders.value  #=> 200
 ```
 
-## Anonymous counters
+## Global counters
 
-Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes  but sometimes you just need a global counter that you can increment.
+Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes but sometimes you just need a global counter that you can increment.
 
 ```ruby
 class GlobalOrderCounter < Counter::Definition
-  global :my_custom_counter_name
+  global
 end
 
 GlobalOrderCounter.counter.value #=> 5

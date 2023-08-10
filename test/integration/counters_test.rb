@@ -100,6 +100,10 @@ class CountersTest < ActiveSupport::TestCase
     assert GlobalOrderCounter.instance, GlobalOrderCounter.counter.definition
   end
 
+  test "sets the counter name" do
+    assert_equal "visits_counter", VisitsCounter.instance.name
+  end
+
   test "increments the counter when an item is added" do
     u = User.create
     u.products.create!
