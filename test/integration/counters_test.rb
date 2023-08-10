@@ -204,6 +204,15 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal [u2, u1], results
   end
 
+  test "orders the results with mixed counter data and attributes" do
+    u1 = User.create!
+    2.times { u1.products.create! }
+    u2 = User.create!
+    2.times { u2.products.create! }
+    results = User.order_by_counter(ProductCounter => :desc, :id => :asc)
+    assert_equal [u1, u2], results
+  end
+
   test "conditionally increments the counter" do
     u = User.create!
     Product.create! user: u, price: 100
