@@ -8,6 +8,7 @@ Counting and aggregation library for Rails.
   - [Main concepts](#main-concepts)
   - [Defining a counter](#defining-a-counter)
   - [Accessing counter values](#accessing-counter-values)
+  - [Sorting or filter parent models by a counter value](#sorting-or-filter-parent-models-by-a-counter-value)
   - [Global counters](#global-counters)
   - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
@@ -83,6 +84,31 @@ Since counters are represented as objects, you need to call `value` on them to r
 ```ruby
 store.total_orders        #=> Counter::Value
 store.total_orders.value  #=> 200
+```
+
+## Sorting or filter parent models by a counter value
+
+Say a Customer has a "total revenue" counter, and you'd like to sort the list of customers with the highest spenders at the top. Since the counts aren't stored on the Customer model, you can't just call `Customer.order(total_orders: :desc)`. Instead, Counterwise provides a convenience method to pull the counter values into the resultset.
+
+```ruby
+Customer.order_by_counter TotalRevenueCounter => :desc
+
+# You can sort by multiple counters or mix counters and model attributes
+Customer.order_by_counter TotalRevenueCounter => :desc, name: :asc
+```
+
+Under the hood, `order_by_counter` will uses `with_counter_data_from` to pull the counter values into the resultset. This is useful if you want to use the counter values in a `where` clause or `select` statement.
+
+```ruby
+Customer.with_counter_data_from(TotalRevenueCounter).where("total_revenue_data > 1000")
+```
+
+Whilst these methods pulls in th counter values, it doesn't include the counter instances themselves. To do this, call
+
+```ruby
+customers = Customer.with_counters TotalRevenueCounter
+# Since the counters are now preloaded, this won't hit the database again and avoids an N+1 query
+customers.each &:total_revenue
 ```
 
 ## Global counters

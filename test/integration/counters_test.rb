@@ -189,6 +189,42 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal 30, counter.value
   end
 
+  test "preloads the counters" do
+    u = User.create!
+    u.products.create!
+    u.products.create! price: 1000
+
+    assert User.with_counters.first.association(:counters).loaded?
+  end
+
+  test "loads the counter data" do
+    u = User.create!
+    2.times { u.products.create! }
+    u.products.create! price: 1000
+    u = User.with_counter_data_from(ProductCounter, PremiumProductCounter).first
+
+    assert_equal 3, u.products_counter_data
+    assert_equal 1, u.premium_products_counter_data
+  end
+
+  test "orders the results by the counter data" do
+    u1 = User.create!
+    2.times { u1.products.create! }
+    u2 = User.create!
+    5.times { u2.products.create! }
+    results = User.order_by_counter(ProductCounter => :desc)
+    assert_equal [u2, u1], results
+  end
+
+  test "orders the results with mixed counter data and attributes" do
+    u1 = User.create!
+    2.times { u1.products.create! }
+    u2 = User.create!
+    2.times { u2.products.create! }
+    results = User.order_by_counter(ProductCounter => :desc, :id => :asc)
+    assert_equal [u1, u2], results
+  end
+
   test "conditionally increments the counter" do
     u = User.create!
     Product.create! user: u, price: 100
