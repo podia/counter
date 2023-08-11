@@ -62,7 +62,8 @@ class Counter::Definition
   # What we record in Counter::Value#name
   def record_name
     return name if global?
-    "#{model.name.underscore}-#{association_name}"
+    return "#{model.name.underscore}-#{association_name}" if association_name.present?
+    return "#{model.name.underscore}-#{name}"
   end
 
   def conditions
@@ -88,10 +89,14 @@ class Counter::Definition
     instance.method_name = as.to_s
   end
 
-  def self.global name = nil
-    name ||= name.underscore
-    instance.name = name.to_s
+  def self.global
     Counter::Definition.instance.global_counters << instance
+  end
+
+  # Set the name of the counter
+  def self.as name
+    instance.name = name.to_s
+    instance.method_name = name.to_s
   end
 
   # Get the name of the association we're counting
