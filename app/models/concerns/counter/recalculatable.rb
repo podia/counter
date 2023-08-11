@@ -1,11 +1,16 @@
 module Counter::Recalculatable
   extend ActiveSupport::Concern
 
-  ####################################################### Support for regenerating the counters
   def recalc!
-    with_lock do
-      new_value = definition.sum? ? sum_by_sql : count_by_sql
-      update! value: new_value
+    if definition.calculated?
+      calculate!
+    elsif definition.manual?
+      raise Counter::Error.new("Can't recalculate a manual counter")
+    else
+      with_lock do
+        new_value = definition.sum? ? sum_by_sql : count_by_sql
+        update! value: new_value
+      end
     end
   end
 
