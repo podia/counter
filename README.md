@@ -15,6 +15,7 @@ Counting and aggregation library for Rails.
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
   - [Hooks](#hooks)
+  - [Testing](#testing)
   - [Testing the counters in production](#testing-the-counters-in-production)
   - [TODO](#todo)
   - [Usage](#usage)
@@ -31,7 +32,6 @@ Counter is different from other solutions like [Rails counter caches](https://ap
 - Incrementing counters can be safely performed in a background job via a change event/deferred reconciliation pattern
 - Avoids lock-contention found in other solutions. By storing the value in another object we reduce the contention on the main e.g. User instance. This is only a small improvement though. By using the background change event pattern, we can batch perform the updates reducing the number of processes requiring a lock.
 - Counters can also perform aggregation (e.g. sum of column values instead of counting rows)
-
 
 ## Main concepts
 
@@ -86,7 +86,7 @@ store.total_orders.value  #=> 200
 
 ## Anonymous counters
 
-Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes  but sometimes you just need a global counter that you can increment.
+Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes but sometimes you just need a global counter that you can increment.
 
 ```ruby
 class GlobalOrderCounter < Counter::Definition
@@ -149,7 +149,7 @@ First, we define the counter on a scoped association. This ensures that when we 
 
 We also define several conditions that operate on the instance level, i.e. when we create/update/delete an instance. On `create` and `delete` we define a block to determine if the counter should be updated. In this case, we only increment the counter when a premium product is created, and only decrement it when a premium product is deleted.
 
-`update` is more complex because there are two scenarios: either a product has been updated to make it premium or  downgrade from premium to some other state. On update, we increment the counter if the price has gone above 1000; and decrement is the price has now gone below 1000.
+`update` is more complex because there are two scenarios: either a product has been updated to make it premium or downgrade from premium to some other state. On update, we increment the counter if the price has gone above 1000; and decrement is the price has now gone below 1000.
 
 We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value" (Counter::Any.instance)
 
@@ -242,6 +242,58 @@ class OrderRevenueCounter < Counter::Definition
 end
 ```
 
+## Testing
+
+If you use RSpec, you can include `Counter::RSpecMatchers` on your helpers and test your counter definitions.
+
+### Include `Counter::RSpecMatchers`
+
+```ruby
+require "counter/rspec/matchers"
+
+RSpec.configure do |config|
+  config.include Counter::RSpecMatchers, type: :counter
+end
+```
+
+### Test the counter definition
+
+```ruby
+require "rails_helper"
+
+RSpec.describe PremiumProductCounter, type: :counter do
+  let(:store) { create(:store) }
+
+  describe "on :create" do
+    context "when the product is premium" do
+      it "increments the counter" do
+        expect { create(:product, :premium, store: store) }.to increment_counter_for(described_class, store)
+      end
+    end
+
+    context "when the product is not premium" do
+      it "doesn't increment the counter" do
+        expect { create(:product, store: store) }.not_to increment_counter_for(described_class, store)
+      end
+    end
+  end
+
+  describe "on :delete" do
+    context "when the product is premium" do
+      it "decrements the counter" do
+        expect { create(:product, :premium, store: store) }.to decrement_counter_for(described_class, store)
+      end
+    end
+
+    context "when the product is not premium" do
+      it "doesn't decrement the counter" do
+        expect { create(:product, store: store) }.not_to decrement_counter_for(described_class, store)
+      end
+    end
+  end
+end
+```
+
 ## Testing the counters in production
 
 It may be useful to verify the accuracy of the counters in production, especially if you are concerned about conditional counters etc causing counter drift over time.
@@ -277,11 +329,13 @@ See the asociated project in Github but roughly I'm thinking:
 - Actually start running this in production for basic use cases
 
 ## Usage
+
 No one has used this in production yet.
 
 You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it.
 
 ## Installation
+
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -289,17 +343,21 @@ gem 'counter'
 ```
 
 And then execute:
+
 ```bash
 $ bundle
 ```
 
 Install the model migrations:
+
 ```bash
 $ rails counter:install:migrations
 ```
 
 ## Contributing
+
 Contribution directions go here.
 
 ## License
+
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
