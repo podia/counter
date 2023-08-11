@@ -124,6 +124,7 @@ class Counter::Definition
         calculated_counters.each(&:calculate!)
       end
     end
+  end
 
   # Set the name of the counter
   def self.as name
