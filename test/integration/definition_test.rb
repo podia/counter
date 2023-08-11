@@ -139,4 +139,14 @@ class DefinitionTest < ActiveSupport::TestCase
     results = User.order_by_counter(ProductCounter => :desc, :id => :asc)
     assert_equal [u1, u2], results
   end
+
+  test "manual counters aren't calculated" do
+    u = User.create!
+    # Calculated counter are not manual
+    assert_equal false, u.conversion_rate.definition.manual?
+    # Counters without associations are manual
+    assert_equal true, u.visits_counter.definition.manual?
+    # Global counters are manual
+    assert_equal true, GlobalOrderCounter.counter.definition.manual?
+  end
 end

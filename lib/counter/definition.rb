@@ -35,24 +35,31 @@ class Counter::Definition
   # The block to call to calculate the counter
   attr_accessor :calculated_from
 
+  # Is this a counter which sums a column?
   def sum?
     column_to_count.present?
   end
 
+  # Is this a global counter? i.e., not attached to a model
   def global?
     model.nil?
   end
 
+  # Is this counter conditional?
   def conditional?
     @conditional
   end
 
+  # Is this counter calculated from other counters?
   def calculated?
     !@calculated_from.nil?
   end
 
+  # Is this a manual counter?
+  # Manual counters are not automatically updated from an association
+  # or calculated from other counters
   def manual?
-    association_name.nil?
+    association_name.nil? && !calculated?
   end
 
   # for global counter instances to find their definition
