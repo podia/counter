@@ -345,16 +345,22 @@ It may be useful to verify the accuracy of the counters in production, especiall
 This form of script takes a sampling approach suitable for large collections. It will randomly select a record and verify that the counter value is correct; if it's not, it stops giving you a chance to investigate.
 
 ```ruby
-site_range = Site.minimum(:id)..Site.maximum(:id)
+counter_range = Counter::Value.minimum(:id)..Counter::Value.maximum(:id)
 
 1000.times do
-  random_id = rand(site_range)
-  site = Site.where("id >= ?", random_id).limit(1).first
-  next if site.nil?
-  if site.confirmed_subscribers_counter.correct?
-    puts "✅ site #{site.id} has correct counter value"
+  random_id = rand(counter_range)
+  counter = Counter::Value.where("id >= ?", random_id).limit(1).first
+  next if counter.nil?
+
+  if counter.global? || counter.recalculated?
+    puts "➡️ Skipping counter #{counter.name} (#{counter.id})"
+    next
+  end
+
+  if counter.correct?
+    puts "✅ Counter #{counter.id} is correct"
   else
-    puts "❌ site #{site.id} has incorrect counter value. Expected #{site.confirmed_subscribers_counter.value} but got #{site.confirmed_subscribers_counter.count_by_sql}"
+    puts "❌ counter #{counter.name} (#{counter.id}) for #{counter.parent_type}##{counter.parent_id} has incorrect counter value. Expected #{counter.value} but got #{counter.count_by_sql}"
     break
   end
   sleep 0.1
