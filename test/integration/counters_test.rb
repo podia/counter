@@ -3,7 +3,7 @@ require "test_helper"
 class CountersTest < ActiveSupport::TestCase
   test "configures the counters on the parent model" do
     definitions = User.counter_configs
-    assert_equal 2, definitions.length
+    assert_equal 4, definitions.length
     definition = definitions.first
     assert_equal ProductCounter, definition.class
     assert_equal User, definition.model
@@ -82,6 +82,14 @@ class CountersTest < ActiveSupport::TestCase
     assert u.products_counter.new_record?
   end
 
+  test "counters can just be their own thing, not associated with an association" do
+    u = User.create!
+    visits_counter = u.visits_counter
+    assert_kind_of Counter::Value, visits_counter
+    visits_counter.increment! by: 10
+    assert 10, visits_counter.value
+  end
+
   test "define a global counter" do
     definition = GlobalOrderCounter.instance
     assert definition.global?
@@ -90,6 +98,10 @@ class CountersTest < ActiveSupport::TestCase
     GlobalOrderCounter.counter.increment!
     assert 1, GlobalOrderCounter.counter.value
     assert GlobalOrderCounter.instance, GlobalOrderCounter.counter.definition
+  end
+
+  test "sets the counter name" do
+    assert_equal "visits_counter", VisitsCounter.instance.name
   end
 
   test "increments the counter when an item is added" do

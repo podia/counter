@@ -13,5 +13,5 @@ class User < ApplicationRecord
   has_many :premium_products, -> { premium }, class_name: "Product"
   has_many :orders
 
-  counter ProductCounter, PremiumProductCounter
+  counter ProductCounter, PremiumProductCounter, OrdersCounter, VisitsCounter
 end

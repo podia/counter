@@ -55,25 +55,7 @@ module Counter::Counters
       counter_definitions = Array.wrap(counter_definitions)
       counter_definitions.each do |definition_class|
         definition = definition_class.instance
-        association_name = definition.association_name
-
-        # Find the association on this model
-        association_reflection = reflect_on_association(association_name)
-        # Find the association classes
-        association_class = association_reflection.class_name.constantize
-        inverse_association = association_reflection.inverse_of
-
-        raise Counter::Error.new("#{association_name} must have an inverse_of specified to be used in #{definition_class.name}") if inverse_association.nil?
-
-        # Add the after_commit hook to the association's class
-        association_class.include Counter::Countable
-        # association_class.include Counter::Changed
-
-        # Update the definition with the association class and inverse association
-        # gathered from the reflection
         definition.model = self
-        definition.inverse_association = inverse_association.name
-        definition.countable_model = association_class
 
         scope :with_counter_data_from, ->(*counter_classes) {
           subqueries = ["#{table_name}.*"]
@@ -109,10 +91,30 @@ module Counter::Counters
           counters.find_or_create_counter!(definition)
         end
 
-        # Provide the Countable class with details about where it's counted
+        @counter_configs << definition unless @counter_configs.include?(definition)
 
-        @counter_configs << definition
-        association_class.add_counted_by definition
+        association_name = definition.association_name
+        if association_name.present?
+          # Find the association on this model
+          association_reflection = reflect_on_association(association_name)
+          raise Counter::Error.new("#{association_name} does not exist #{self.name}") if association_reflection.nil?
+
+          # Find the association classes
+          association_class = association_reflection.class_name.constantize
+          inverse_association = association_reflection.inverse_of
+          raise Counter::Error.new("#{association_name} must have an inverse_of specified to be used in #{definition_class.name}") if inverse_association.nil?
+
+          # Add the after_commit hook to the association's class
+          association_class.include Counter::Countable
+
+          # Update the definition with the association class and inverse association
+          # gathered from the reflection
+          definition.inverse_association = inverse_association.name
+          definition.countable_model = association_class
+
+          # Provide the Countable class with details about where it's counted
+          association_class.add_counted_by definition
+        end
       end
     end
 

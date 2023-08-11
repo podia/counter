@@ -1,3 +1,4 @@
 class GlobalOrderCounter < Counter::Definition
-  global :total_orders
+  global
+  as "total_orders"
 end

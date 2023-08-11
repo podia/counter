@@ -34,8 +34,6 @@ class Counter::Definition
   attr_writer :global_counters
   # An array of Proc to run when the counter changes
   attr_writer :counter_hooks
-  # An array of all global counters
-  attr_writer :global_counters
 
   def sum?
     column_to_count.present?
@@ -64,7 +62,8 @@ class Counter::Definition
   # What we record in Counter::Value#name
   def record_name
     return name if global?
-    "#{model.name.underscore}-#{association_name}"
+    return "#{model.name.underscore}-#{association_name}" if association_name.present?
+    return "#{model.name.underscore}-#{name}"
   end
 
   def conditions
@@ -82,11 +81,6 @@ class Counter::Definition
     @counter_hooks
   end
 
-  def global_counters
-    @global_counters ||= []
-    @global_counters
-  end
-
   # Set the association we're counting
   def self.count association_name, as: "#{association_name}_counter"
     instance.association_name = association_name
@@ -95,10 +89,14 @@ class Counter::Definition
     instance.method_name = as.to_s
   end
 
-  def self.global name = nil
-    name ||= name.underscore
-    instance.name = name.to_s
+  def self.global
     Counter::Definition.instance.global_counters << instance
+  end
+
+  # Set the name of the counter
+  def self.as name
+    instance.name = name.to_s
+    instance.method_name = name.to_s
   end
 
   # Get the name of the association we're counting
