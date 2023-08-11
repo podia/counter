@@ -102,9 +102,7 @@ class Counter::Definition
     instance.method_name = as.to_s
   end
 
-  def self.global name = nil
-    name ||= name.underscore
-    instance.name = name.to_s
+  def self.global
     Counter::Definition.instance.global_counters << instance
   end
 
@@ -126,6 +124,11 @@ class Counter::Definition
         calculated_counters.each(&:calculate!)
       end
     end
+
+  # Set the name of the counter
+  def self.as name
+    instance.name = name.to_s
+    instance.method_name = name.to_s
   end
 
   # Get the name of the association we're counting

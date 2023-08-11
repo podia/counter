@@ -57,6 +57,36 @@ module Counter::Counters
         definition = definition_class.instance
         definition.model = self
 
+        scope :with_counter_data_from, ->(*counter_classes) {
+          subqueries = ["#{table_name}.*"]
+          counter_classes.each do |counter_class|
+            sql = Counter::Value.select("value")
+              .where("parent_id = #{table_name}.id AND parent_type = '#{name}' AND name = '#{counter_class.instance.record_name}'").to_sql
+            subqueries << "(#{sql}) AS #{counter_class.instance.name}_data"
+          end
+          select(subqueries)
+        }
+
+        # Expects a hash of counter classes and directions, like so:
+        # order_by_counter ProductCounter => :desc, PremiumProductCounter => :asc
+        scope :order_by_counter, ->(order_hash) {
+          counter_classes = order_hash.keys.select { |counter_class|
+            counter_class.is_a?(Class) &&
+              counter_class.ancestors.include?(Counter::Definition)
+          }
+          order_params = {}
+          order_hash.map do |counter_class, direction|
+            if counter_class.is_a?(String) || counter_class.is_a?(Symbol)
+              order_params[counter_class] = direction
+            elsif counter_class.ancestors.include?(Counter::Definition)
+              order_params["#{counter_class.instance.name}_data"] = direction
+            end
+          end
+          with_counter_data_from(*counter_classes).order(order_params)
+        }
+
+        scope :with_counters, -> { includes(:counters) }
+
         define_method definition.method_name do
           counters.find_or_create_counter!(definition)
         end

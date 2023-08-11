@@ -8,7 +8,8 @@ Counting and aggregation library for Rails.
   - [Main concepts](#main-concepts)
   - [Defining a counter](#defining-a-counter)
   - [Accessing counter values](#accessing-counter-values)
-  - [Anonymous counters](#anonymous-counters)
+  - [Sorting or filter parent models by a counter value](#sorting-or-filter-parent-models-by-a-counter-value)
+  - [Global counters](#global-counters)
   - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
   - [Calculating a value from other counters](#calculating-a-value-from-other-counters)
@@ -16,6 +17,7 @@ Counting and aggregation library for Rails.
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
   - [Hooks](#hooks)
+  - [Testing](#testing)
   - [Testing the counters in production](#testing-the-counters-in-production)
   - [TODO](#todo)
   - [Usage](#usage)
@@ -33,7 +35,6 @@ Counter is different from other solutions like [Rails counter caches](https://ap
 - Avoids lock-contention found in other solutions. By storing the value in another object we reduce the contention on the main e.g. User instance. This is only a small improvement though. By using the background change event pattern, we can batch perform the updates reducing the number of processes requiring a lock.
 - Counters can also perform aggregation (e.g. sum of column values instead of counting rows)
 
-
 ## Main concepts
 
 ![](docs/data_model.png)
@@ -41,38 +42,6 @@ Counter is different from other solutions like [Rails counter caches](https://ap
 `Counter::Definition` defines what the counter is, what model it's connected to, what association it counts, how the count is performed etc. You create a subclass of `Counter::Definition` and call a few class methods to configure it. The definition is available through `counter.definition` for any counter value…
 
 `Counter::Value` is the value of a counter. So, for example, a User might have many Posts, so a User would have a `counters` association containing a `Counter::Value` for the number of posts. Counters can be accessed via their name `user.posts_counter` or via the `find_counter` method on the association, e.g. `user.counters.find_counter PostCounter`
-
-`Counter::Change` is a temporary record that records a change to a counter. Instead of updating a counter directly, which requires obtaining a lock on it to perform it safely and atomically, a new `Change` event is inserted into the table. On regular intervals, the `Counter::Value` is updated by incrementing the value by the sum of all outstanding changes. This requires much less frequent locks at the expense of eventual consistency.
-
-For example, you might have many background jobs running concurrently, inserting hundreds/thousands of rows. The would not need to fight for a lock to update the counter and would only need to insert Counter::Change rows. The counter would then be updated, in a single operation, by summing all the persisted change values.
-
-Basically updating a counter value requires this SQL:
-
-```sql
-UPDATE counter_values
--- Update the counter with the sum of pending changes
-SET value = value + changes.sum
-FROM (
-  -- Find the pending changes for the counter
-  SELECT sum(value) as sum
-  FROM counter_changes
-  WHERE counter_id = 100
-) as changes
-WHERE id = 100
-```
-
-Or even reconcile all pending counters in a single statement:
-
-```sql
-UPDATE counter_values
-SET value = value + changes.sum
-FROM (
-  SELECT sum(value)
-  FROM counter_changes
-  GROUP BY counter_id
-) as changes
-WHERE counters.id = counter_id
-```
 
 ## Defining a counter
 
@@ -95,18 +64,19 @@ end
 
 First we define the counter class itself using `count` to specify the association we're counting, then "attach" it to the parent Store model.
 
-By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, pass a `as` parameter:
+By default, the counter will be available as `<association>_counter`, e.g. `store.orders_counter`. To customise this, use the `as` method:
 
 ```ruby
 class OrderCounter < Counter::Definition
   include Counter::Counters
-  count :orders, as: :total_orders
+  count :orders
+  as :total_orders
 end
 
 store.total_orders
 ```
 
-The counter's value with be stored as a `Counter::Value` with the name prefixed by the model name. e.g. `store_total_orders`
+The counter's value with be stored as a `Counter::Value` with the name prefixed by the model name. e.g. `store-total_orders`
 
 ## Accessing counter values
 
@@ -117,13 +87,38 @@ store.total_orders        #=> Counter::Value
 store.total_orders.value  #=> 200
 ```
 
-## Anonymous counters
+## Sorting or filter parent models by a counter value
 
-Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes  but sometimes you just need a global counter that you can increment.
+Say a Customer has a "total revenue" counter, and you'd like to sort the list of customers with the highest spenders at the top. Since the counts aren't stored on the Customer model, you can't just call `Customer.order(total_orders: :desc)`. Instead, Counterwise provides a convenience method to pull the counter values into the resultset.
+
+```ruby
+Customer.order_by_counter TotalRevenueCounter => :desc
+
+# You can sort by multiple counters or mix counters and model attributes
+Customer.order_by_counter TotalRevenueCounter => :desc, name: :asc
+```
+
+Under the hood, `order_by_counter` will uses `with_counter_data_from` to pull the counter values into the resultset. This is useful if you want to use the counter values in a `where` clause or `select` statement.
+
+```ruby
+Customer.with_counter_data_from(TotalRevenueCounter).where("total_revenue_data > 1000")
+```
+
+Whilst these methods pulls in th counter values, it doesn't include the counter instances themselves. To do this, call
+
+```ruby
+customers = Customer.with_counters TotalRevenueCounter
+# Since the counters are now preloaded, this won't hit the database again and avoids an N+1 query
+customers.each &:total_revenue
+```
+
+## Global counters
+
+Most counters are associated with a model instance and association. These counters are automatically incremented when the associated collection changes but sometimes you just need a global counter that you can increment.
 
 ```ruby
 class GlobalOrderCounter < Counter::Definition
-  global :my_custom_counter_name
+  global
 end
 
 GlobalOrderCounter.counter.value #=> 5
@@ -182,7 +177,7 @@ First, we define the counter on a scoped association. This ensures that when we 
 
 We also define several conditions that operate on the instance level, i.e. when we create/update/delete an instance. On `create` and `delete` we define a block to determine if the counter should be updated. In this case, we only increment the counter when a premium product is created, and only decrement it when a premium product is deleted.
 
-`update` is more complex because there are two scenarios: either a product has been updated to make it premium or  downgrade from premium to some other state. On update, we increment the counter if the price has gone above 1000; and decrement is the price has now gone below 1000.
+`update` is more complex because there are two scenarios: either a product has been updated to make it premium or downgrade from premium to some other state. On update, we increment the counter if the price has gone above 1000; and decrement is the price has now gone below 1000.
 
 We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value" (Counter::Any.instance)
 
@@ -291,6 +286,58 @@ class OrderRevenueCounter < Counter::Definition
 end
 ```
 
+## Testing
+
+If you use RSpec, you can include `Counter::RSpecMatchers` on your helpers and test your counter definitions.
+
+### Include `Counter::RSpecMatchers`
+
+```ruby
+require "counter/rspec/matchers"
+
+RSpec.configure do |config|
+  config.include Counter::RSpecMatchers, type: :counter
+end
+```
+
+### Test the counter definition
+
+```ruby
+require "rails_helper"
+
+RSpec.describe PremiumProductCounter, type: :counter do
+  let(:store) { create(:store) }
+
+  describe "on :create" do
+    context "when the product is premium" do
+      it "increments the counter" do
+        expect { create(:product, :premium, store: store) }.to increment_counter_for(described_class, store)
+      end
+    end
+
+    context "when the product is not premium" do
+      it "doesn't increment the counter" do
+        expect { create(:product, store: store) }.not_to increment_counter_for(described_class, store)
+      end
+    end
+  end
+
+  describe "on :delete" do
+    context "when the product is premium" do
+      it "decrements the counter" do
+        expect { create(:product, :premium, store: store) }.to decrement_counter_for(described_class, store)
+      end
+    end
+
+    context "when the product is not premium" do
+      it "doesn't decrement the counter" do
+        expect { create(:product, store: store) }.not_to decrement_counter_for(described_class, store)
+      end
+    end
+  end
+end
+```
+
 ## Testing the counters in production
 
 It may be useful to verify the accuracy of the counters in production, especially if you are concerned about conditional counters etc causing counter drift over time.
@@ -319,18 +366,20 @@ end
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
+- Implement the background job pattern for incrementing counters
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
-- Can we support floating point values? Sounds useful but don't have a use case for it right now. Would they need to be a different ActiveRecord table?
 - In a similar vein of supporting different value types, can we support HLL values? Instead of increment an integer we add the items hash to a HyperLogLog so we can count unique items. An example would be counting site visits in a time-based daily counter, then combine the daily counts and still obtain an estimated number of monthly _unique_ visits. Again, not sure if this is the same ActiveRecord model or something different.
 - Actually start running this in production for basic use cases
 
 ## Usage
+
 No one has used this in production yet.
 
 You probably shouldn't right now unless you're the sort of person that checks if something is poisonous by licking it.
 
 ## Installation
+
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -338,17 +387,21 @@ gem 'counter'
 ```
 
 And then execute:
+
 ```bash
 $ bundle
 ```
 
 Install the model migrations:
+
 ```bash
 $ rails counter:install:migrations
 ```
 
 ## Contributing
+
 Contribution directions go here.
 
 ## License
+
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
