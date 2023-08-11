@@ -5,11 +5,7 @@
 #   # This specifies the association we're counting
 #   count :products
 #   sum :price   # optional
-#   filters: {   # optional
-#     create: ->(product) { product.premium? }
-#     update: ->(product) { product.has_changed? :premium, to: :true }
-#     delete: ->(product) { product.premium? }
-#   }
+#   as "my_counter"
 # end
 class Counter::Definition
   include Singleton
@@ -44,7 +40,7 @@ class Counter::Definition
   end
 
   def global?
-    model.nil? && association_name.nil?
+    model.nil?
   end
 
   def conditional?
@@ -52,7 +48,11 @@ class Counter::Definition
   end
 
   def calculated?
-    !@calculate_block.nil?
+    !@calculated_from.nil?
+  end
+
+  def manual?
+    association_name.nil?
   end
 
   # for global counter instances to find their definition
