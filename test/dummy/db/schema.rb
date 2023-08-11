@@ -13,7 +13,7 @@
 ActiveRecord::Schema[7.0].define(version: 2023_07_10_225537) do
   create_table "counter_values", force: :cascade do |t|
     t.string "name"
-    t.float "value", default: 0.0
+    t.decimal "value", default: "0.0", null: false
     t.string "parent_type"
     t.integer "parent_id"
     t.datetime "created_at", null: false
