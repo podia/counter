@@ -14,4 +14,5 @@ class User < ApplicationRecord
   has_many :orders
 
   counter ProductCounter, PremiumProductCounter, OrdersCounter, VisitsCounter
+  counter ConversionRateCounter
 end

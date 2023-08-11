@@ -12,6 +12,7 @@ Counting and aggregation library for Rails.
   - [Global counters](#global-counters)
   - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Aggregating a value (e.g. sum of order revenue)](#aggregating-a-value-eg-sum-of-order-revenue)
+  - [Calculating a value from other counters](#calculating-a-value-from-other-counters)
   - [Recalculating a counter](#recalculating-a-counter)
   - [Reset a counter](#reset-a-counter)
   - [Verify a counter](#verify-a-counter)
@@ -210,6 +211,22 @@ and access it like
   store.orders.create total_price: 100
   store.order_revenue.value #=> 200
 ```
+
+## Calculating a value from other counters
+
+You may also need have a common need to calculate a value from other counters. For example, given counters for the number of purchases and the number of visits, you might want to calculate the conversion rate. You can do this with a `calculate_from` block.
+
+```ruby
+class ConversionRateCounter < Counter::Definition
+  count nil, as: "conversion_rate"
+
+  calculated_from VisitsCounter, OrdersCounter do |visits, orders|
+    (orders.value.to_f / visits.value) * 100
+  end
+end
+```
+
+This recalculates the conversion rate each time the visits or order counters are updated. If either dependant counter is not present, the calculation will not be run (i.e., visits and order will never be nil).
 
 ## Recalculating a counter
 

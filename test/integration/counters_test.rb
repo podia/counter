@@ -3,7 +3,7 @@ require "test_helper"
 class CountersTest < ActiveSupport::TestCase
   test "configures the counters on the parent model" do
     definitions = User.counter_configs
-    assert_equal 4, definitions.length
+    assert_equal 5, definitions.length
     definition = definitions.first
     assert_equal ProductCounter, definition.class
     assert_equal User, definition.model
@@ -268,5 +268,13 @@ class CountersTest < ActiveSupport::TestCase
     assert_output "" do
       u.orders.create! product: product, price: 500
     end
+  end
+
+  test "calculated counters are kept up-to-date" do
+    u = User.create!
+    product = Product.create! user: u, price: 1000
+    u.visits_counter.increment! by: 100
+    2.times { u.orders.create! product: product, price: 100 }
+    assert_equal 2, u.conversion_rate.value
   end
 end
