@@ -28,4 +28,11 @@ class VerifyTest < ActiveSupport::TestCase
     u.products_counter.increment! by: 2
     assert [1, 3], u.products_counter.verify
   end
+
+  test "sample_and_verify" do
+    u = User.create!
+    u.products.create!
+    u.products_counter.increment! by: 2
+    assert_equal 1, Counter::Value.sample_and_verify(samples: 1, verbose: false, on_error: :correct)
+  end
 end

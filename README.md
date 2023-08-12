@@ -380,30 +380,23 @@ end
 
 It's very useful to verify the accuracy of the counters in production, especially if you are concerned about conditional counters etc causing counter drift over time.
 
-This form of script takes a sampling approach suitable for large collections. It will randomly select a record and verify that the counter value is correct; if it's not, it stops giving you a chance to investigate.
+A simple approach would be:
 
 ```ruby
-counter_range = Counter::Value.minimum(:id)..Counter::Value.maximum(:id)
-
-1000.times do
-  random_id = rand(counter_range)
-  counter = Counter::Value.where("id >= ?", random_id).limit(1).first
-  next if counter.nil?
-
-  if counter.global? || counter.recalculated?
-    puts "➡️ Skipping counter #{counter.name} (#{counter.id})"
-    next
-  end
-
-  if counter.correct?
-    puts "✅ Counter #{counter.id} is correct"
-  else
-    puts "❌ counter #{counter.name} (#{counter.id}) for #{counter.parent_type}##{counter.parent_id} has incorrect counter value. Expected #{counter.value} but got #{counter.count_by_sql}"
-    break
-  end
-  sleep 0.1
-end
+Counter::Value.all.each &:correct!
 ```
+
+If you have a large number of counters though it's best to take a sampling approach to randomly select a counter and verify that the value is correct
+
+```ruby
+Counter::Value.sample_and_verify samples: 1000, verbose: true, on_error: :correct
+```
+
+Options:
+scope — allows you to scope the counters to a particular model or set of models, e.g. `scope: -> { where("name LIKE 'store-%'") }`. By default, all counters are sampled
+samples — the number of counters to sample. Default: 1000
+verbose — print out the counter details and whether it was correct. Default: true
+on_error — what to do when a counter is incorrect. `:correct` will correct the counter, `:raise` will raise an error, `:log` will log the error to Rails.logger. Default: :raise
 
 ---
 
