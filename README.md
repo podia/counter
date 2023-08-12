@@ -393,10 +393,11 @@ Counter::Value.sample_and_verify samples: 1000, verbose: true, on_error: :correc
 ```
 
 Options:
-scope — allows you to scope the counters to a particular model or set of models, e.g. `scope: -> { where("name LIKE 'store-%'") }`. By default, all counters are sampled
-samples — the number of counters to sample. Default: 1000
-verbose — print out the counter details and whether it was correct. Default: true
-on_error — what to do when a counter is incorrect. `:correct` will correct the counter, `:raise` will raise an error, `:log` will log the error to Rails.logger. Default: :raise
+
+- scope — allows you to scope the counters to a particular model or set of models, e.g. `scope: -> { where("name LIKE 'store-%'") }`. By default, all counters are sampled
+- samples — the number of counters to sample. Default: 1000
+- verbose — print out the counter details and whether it was correct. Default: true
+- on_error — what to do when a counter is incorrect. `:correct` will correct the counter, `:raise` will raise an error, `:log` will log the error to Rails.logger. Default: :raise
 
 ---
 
