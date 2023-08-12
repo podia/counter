@@ -131,6 +131,17 @@ class DefinitionTest < ActiveSupport::TestCase
     assert_equal [u2, u1], results
   end
 
+  test "order is chainable" do
+    u1 = User.create!
+    2.times { u1.products.create! }
+    u2 = User.create!
+    5.times { u2.products.create! }
+    results = User.order_by_counter(ProductCounter => :desc).where(id: u1.id).pluck :id
+    assert_equal [u1.id], results
+    results = User.where(id: u1.id).order_by_counter(ProductCounter => :desc)
+    assert_equal [u1], results
+  end
+
   test "orders the results with mixed counter data and attributes" do
     u1 = User.create!
     2.times { u1.products.create! }
