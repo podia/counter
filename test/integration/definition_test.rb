@@ -160,4 +160,12 @@ class DefinitionTest < ActiveSupport::TestCase
     # Global counters are manual
     assert_equal true, GlobalOrderCounter.counter.definition.manual?
   end
+
+  test "subclasses should inherit counters from superclasses" do
+    u = User.create!
+    product = SpecialProduct.create! user: u, price: 10
+    product.orders.create! price: 10, user: u
+    assert_kind_of Counter::Value, product.order_revenue
+    assert 10, product.order_revenue.value
+  end
 end

@@ -47,5 +47,10 @@ module Counter::Countable
       @counted_by ||= []
       @counted_by << config
     end
+
+    def inherited subclass
+      super
+      @counted_by.each { |c| subclass.add_counted_by c }
+    end
   end
 end
