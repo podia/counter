@@ -35,11 +35,12 @@ module Counter::Verifyable
     def sample_and_verify scope: -> { all }, samples: 1000, verbose: true, on_error: :raise
       incorrect_counters = 0
 
-      counter_range = Counter::Value.minimum(:id)..Counter::Value.maximum(:id)
+      counters = Counter::Value.merge(scope)
+      counter_range = counters.minimum(:id)..counters.maximum(:id)
 
       samples.times do
         random_id = rand(counter_range)
-        counter = Counter::Value.merge(scope).where("id >= ?", random_id).limit(1).first
+        counter = counters.where("id >= ?", random_id).limit(1).first
         next if counter.nil?
 
         if counter.definition.global? || counter.definition.calculated?
@@ -56,7 +57,9 @@ module Counter::Verifyable
           case on_error
           when :raise then raise Counter::Error.new(message)
           when :log then Rails.logger.error message
-          when :correct then counter.correct!
+          when :correct
+            counter.correct!
+            puts "🔧 Corrected counter #{counter.id}" if verbose
           end
         end
         sleep 0.1
