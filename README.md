@@ -129,13 +129,13 @@ this would use the definition of the counter, including any option to sum a colu
 
 ### Reset a counter
 
-You can also reset a counter by calling `reset`. Since counters are ActiveRecord objects, you could also reset them using
+You can also reset a counter by calling `reset`.
 
 ```ruby
 store.order_revenue.reset
 ```
 
-Since counters are ActiveRecord objects, you could also reset them using
+Since counters are ActiveRecord objects, you could also reset them using:
 
 ```ruby
 Counter::Value.update value: 0
