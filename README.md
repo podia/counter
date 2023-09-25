@@ -133,6 +133,11 @@ You can also reset a counter by calling `reset`. Since counters are ActiveRecord
 
 ```ruby
 store.order_revenue.reset
+```
+
+Since counters are ActiveRecord objects, you could also reset them using
+
+```ruby
 Counter::Value.update value: 0
 ```
 
