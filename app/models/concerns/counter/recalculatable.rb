@@ -16,6 +16,8 @@ module Counter::Recalculatable
           on_duplicate: Arel.sql("value = counter_values.value + EXCLUDED.value"),
           record_timestamps: true
         )
+
+        reload
       end
     end
   end
