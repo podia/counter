@@ -9,7 +9,13 @@ module Counter::Recalculatable
     else
       with_lock do
         new_value = definition.sum? ? sum_by_sql : count_by_sql
-        update! value: new_value
+
+        self.class.upsert(
+          attributes.without("id", "created_at", "updated_at").symbolize_keys.merge(value: new_value),
+          unique_by: [:parent_type, :parent_id, :name],
+          on_duplicate: Arel.sql("value = counter_values.value + EXCLUDED.value"),
+          record_timestamps: true
+        )
       end
     end
   end
