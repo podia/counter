@@ -26,7 +26,7 @@ class RecalcTest < ActiveSupport::TestCase
     counter.reset!
     assert_equal 0, counter.value
     counter.recalc!
-    assert_equal 30, counter.value
+    assert_equal 30, counter.reload.value
   end
 
   test "can recalculate a calculated counter" do
