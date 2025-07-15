@@ -32,8 +32,11 @@ module Counter::Countable
         parent_association.load_target unless parent_association.loaded?
         parent_model = parent_association.target
         next unless parent_model
-        counter = parent_model.counters.find_or_create_counter!(counter_definition)
-        yield counter if counter
+
+        if parent_model.class.reflect_on_association(:counters) && parent_model.class == counter_definition.model
+          counter = parent_model.counters.find_or_create_counter!(counter_definition)
+          yield counter if counter
+        end
       end
     end
   end
