@@ -406,6 +406,36 @@ Options:
 
 ---
 
+## Release Instructions
+
+To release a new version of the counterwise gem:
+
+1. **Merge changes**: Ensure all changes are merged into the main branch via pull requests.
+
+2. **Update version**: Bump the version number in `lib/counter/version.rb`:
+   ```ruby
+   module Counter
+     VERSION = "x.y.z"  # Update to new version
+   end
+   ```
+
+3. **Commit and push version bump**:
+   ```bash
+   git add lib/counter/version.rb
+   git commit -m "Bump version to x.y.z"
+   git push origin main
+   ```
+
+4. **Build and release**:
+   ```bash
+   gem build counter.gemspec
+   gem push counterwise-x.y.z.gem
+   ```
+
+The gem will be available on [RubyGems.org](https://rubygems.org/gems/counterwise) within a few minutes.
+
+---
+
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
