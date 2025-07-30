@@ -10,11 +10,13 @@ Gem::Specification.new do |spec|
   spec.description = "Counting and aggregation library for Rails."
   spec.license = "MIT"
 
+  spec.required_ruby_version = ">= 3.4.0"
+
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/podia/counter"
   spec.metadata["changelog_uri"] = "https://github.com/podia/counter/CHANGELOG.md"
 
   spec.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
-  spec.add_dependency "rails", ">= 7"
+  spec.add_dependency "rails", ">= 8"
 end

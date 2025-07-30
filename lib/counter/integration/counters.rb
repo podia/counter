@@ -57,13 +57,24 @@ module Counter::Counters
         definition = definition_class.instance
         definition.model = self
 
+        counter_subquery = ->(counter_class) do
+          record_name = counter_class.instance.record_name
+
+          Counter::Value
+            .select(:value)
+            .where("parent_id = #{table_name}.id AND parent_type = '#{name}' AND name = '#{record_name}'")
+            .limit(1)
+            .to_sql
+        end
+
         scope :with_counter_data_from, ->(*counter_classes) {
           subqueries = ["#{table_name}.*"]
+
           counter_classes.each do |counter_class|
-            sql = Counter::Value.select("value")
-              .where("parent_id = #{table_name}.id AND parent_type = '#{name}' AND name = '#{counter_class.instance.record_name}'").to_sql
-            subqueries << "(#{sql}) AS #{counter_class.instance.name}_data"
+            subquery = counter_subquery.call(counter_class)
+            subqueries << Arel.sql("(#{subquery}) AS #{"#{counter_class.instance.name}_data"}")
           end
+
           select(subqueries)
         }
 
@@ -74,15 +85,16 @@ module Counter::Counters
             counter_class.is_a?(Class) &&
               counter_class.ancestors.include?(Counter::Definition)
           }
-          order_params = {}
-          order_hash.map do |counter_class, direction|
+
+          order_clauses = order_hash.map do |counter_class, direction|
             if counter_class.is_a?(String) || counter_class.is_a?(Symbol)
-              order_params[counter_class] = direction
+              "#{counter_class} #{direction.to_s.upcase}"
             elsif counter_class.ancestors.include?(Counter::Definition)
-              order_params["#{counter_class.instance.name}_data"] = direction
+              "(#{counter_subquery.call(counter_class)}) #{direction.to_s.upcase}"
             end
           end
-          with_counter_data_from(*counter_classes).order(order_params)
+
+          with_counter_data_from(*counter_classes).order(Arel.sql(order_clauses.join(", ")))
         }
 
         scope :with_counters, -> { includes(:counters) }
