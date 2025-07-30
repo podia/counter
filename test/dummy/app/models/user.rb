@@ -12,6 +12,7 @@ class User < ApplicationRecord
   has_many :products
   has_many :premium_products, -> { premium }, class_name: "Product"
   has_many :orders
+  has_many :subscriptions
 
   counter ProductCounter, PremiumProductCounter, OrdersCounter, VisitsCounter
   counter ConversionRateCounter

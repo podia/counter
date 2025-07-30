@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_07_10_225537) do
+ActiveRecord::Schema[7.0].define(version: 2025_07_30_141956) do
   create_table "counter_values", force: :cascade do |t|
     t.string "name"
     t.decimal "value", default: "0.0", null: false
@@ -21,6 +21,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_10_225537) do
     t.index ["name"], name: "index_counter_values_on_name"
     t.index ["parent_type", "parent_id", "name"], name: "unique_counter_values", unique: true
     t.index ["parent_type", "parent_id"], name: "index_counter_values_on_parent"
+  end
+
+  create_table "coupons", force: :cascade do |t|
+    t.string "discountable_type", null: false
+    t.integer "discountable_id", null: false
+    t.integer "amount"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["discountable_type", "discountable_id"], name: "index_coupons_on_discountable"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -42,6 +51,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_10_225537) do
     t.index ["user_id"], name: "index_products_on_user_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "name"
+    t.integer "price"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_subscriptions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -50,4 +68,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_07_10_225537) do
   add_foreign_key "orders", "products"
   add_foreign_key "orders", "users"
   add_foreign_key "products", "users"
+  add_foreign_key "subscriptions", "users"
 end

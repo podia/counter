@@ -34,4 +34,21 @@ class CountersTest < ActiveSupport::TestCase
     product.update! name: "new name"
     assert_equal 1, counter.reload.value
   end
+
+  test "only try to increment counters for polymorphic associations with registered counters" do
+    u = User.create!
+    product = u.products.create!
+    subscription = u.subscriptions.create!
+
+    subscription_coupon = subscription.coupons.create!(amount: 1000)
+    assert_equal false, subscription.respond_to?(:counters)
+
+    counter = product.counters.find_counter(ProductDiscountsCounter)
+    assert_equal nil, counter
+
+    subscription_coupon.destroy!
+    product_coupon = product.coupons.create!(amount: 500)
+    counter = product.counters.find_counter(ProductDiscountsCounter)
+    assert_equal 500, counter.reload.value
+  end
 end
