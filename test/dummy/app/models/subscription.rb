@@ -1,6 +1,6 @@
 # == Schema Information
 #
-# Table name: products
+# Table name: subscriptions
 #
 #  id         :integer          not null, primary key
 #  user_id    :integer          not null, indexed
@@ -9,18 +9,6 @@
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
-class Product < ApplicationRecord
-  include Counter::Counters
-  include Counter::Changable
-
-  belongs_to :user
-  has_many :orders
+class Subscription < ApplicationRecord
   has_many :coupons, as: :discountable
-
-  scope :premium, -> { where("price >= 1000") }
-  counter OrderRevenueCounter, ProductDiscountsCounter
-
-  def premium?
-    (price || 0) >= 1000
-  end
 end
