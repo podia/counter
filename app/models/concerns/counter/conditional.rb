@@ -11,6 +11,7 @@ module Counter::Conditional
     end
 
     def accept_item? item, on, increment: true
+      return false if definition.calculated_value?
       return true unless definition.conditional?
 
       conditions = definition.conditions[on]
