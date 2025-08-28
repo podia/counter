@@ -34,6 +34,8 @@ class Counter::Definition
   attr_writer :dependent_counters
   # The block to call to calculate the counter
   attr_accessor :calculated_from
+  # The block used to manually set the value
+  attr_accessor :calculated_value
 
   # Is this a counter which sums a column?
   def sum?
@@ -107,6 +109,10 @@ class Counter::Definition
     instance.name = as.to_s
     # How the counter can be accessed e.g. counter.products_counter
     instance.method_name = as.to_s
+  end
+
+  def self.calculated_value(&block)
+    instance.calculated_value = block
   end
 
   def self.global
