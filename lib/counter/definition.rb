@@ -52,6 +52,11 @@ class Counter::Definition
     @conditional
   end
 
+  # Is this counter using a calculated value?
+  def calculated_value?
+    @calculated_value.present?
+  end
+
   # Is this counter calculated from other counters?
   def calculated?
     !@calculated_from.nil?
