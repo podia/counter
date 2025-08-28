@@ -116,8 +116,9 @@ class Counter::Definition
     instance.method_name = as.to_s
   end
 
-  def self.calculated_value(&block)
-    instance.calculated_value = block
+  def self.calculated_value(association_name, calculation)
+    instance.association_name = association_name
+    instance.calculated_value = calculation
     set_default_name
   end
 
