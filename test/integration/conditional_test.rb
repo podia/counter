@@ -28,4 +28,12 @@ class ConditionalTest < ActiveSupport::TestCase
     product.destroy
     assert_equal 0, u.premium_products_counter.value
   end
+
+  test "calculated values never accept item" do
+    user = User.create!
+    product = Product.create!(user:, price: 1000)
+
+    order = Order.create!(user:, product:, price: 1000)
+    refute user.returned_order_counter.accept_item?(order, "x")
+  end
 end

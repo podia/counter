@@ -47,8 +47,25 @@ class CountersTest < ActiveSupport::TestCase
     assert_equal nil, counter
 
     subscription_coupon.destroy!
-    product_coupon = product.coupons.create!(amount: 500)
+    _product_coupon = product.coupons.create!(amount: 500)
     counter = product.counters.find_counter(ProductDiscountsCounter)
     assert_equal 500, counter.reload.value
+  end
+
+  test "calculated values do not incremement or decrement" do
+    user = User.create!
+    product = Product.create!(user:, price: 1000)
+
+    Order.create!(user:, product:, price: 1000)
+    assert_equal 500, user.returned_order_counter.value
+
+    Order.create!(user:, product:, price: 1000)
+    assert_equal 500, user.returned_order_counter.value
+
+    user.orders.last.update!(price: 100000000)
+    assert_equal 500, user.returned_order_counter.value
+
+    Order.destroy_all
+    assert_equal 500, user.returned_order_counter.value
   end
 end
