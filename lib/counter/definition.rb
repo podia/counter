@@ -123,8 +123,8 @@ class Counter::Definition
     instance.method_name = as.to_s
   end
 
-  def self.calculated_value(association_name, calculation)
-    instance.association_name = association_name
+  def self.calculated_value(calculation, association: nil)
+    instance.association_name = association
     instance.calculated_value = calculation
     set_default_name
   end
