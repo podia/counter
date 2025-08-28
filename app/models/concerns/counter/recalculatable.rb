@@ -2,7 +2,9 @@ module Counter::Recalculatable
   extend ActiveSupport::Concern
 
   def recalc!
-    if definition.calculated?
+    if definition.calculated_value?
+      recalculate_with_value!
+    elsif definition.calculated?
       calculate!
     elsif definition.manual?
       raise Counter::Error.new("Can't recalculate a manual counter")
@@ -25,5 +27,13 @@ module Counter::Recalculatable
   # use this scope when recalculating the value
   def recalc_scope
     parent.association(definition.association_name).scope
+  end
+
+  private
+
+  def recalculate_with_value!
+    with_lock do
+      update!(value: definition.calculated_value.call(parent))
+    end
   end
 end
