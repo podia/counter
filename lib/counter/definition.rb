@@ -78,7 +78,7 @@ class Counter::Definition
   def record_name
     return name if global?
     return "#{model.name.underscore}-#{association_name}" if association_name.present?
-    return "#{model.name.underscore}-#{name}"
+    "#{model.name.underscore}-#{name}"
   end
 
   def conditions
