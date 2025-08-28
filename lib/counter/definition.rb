@@ -113,6 +113,12 @@ class Counter::Definition
 
   def self.calculated_value(&block)
     instance.calculated_value = block
+    set_default_name
+  end
+
+  def self.set_default_name
+    instance.name ||= to_s.underscore
+    instance.method_name ||= to_s.underscore
   end
 
   def self.global
