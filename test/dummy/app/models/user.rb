@@ -16,4 +16,8 @@ class User < ApplicationRecord
 
   counter ProductCounter, PremiumProductCounter, OrdersCounter, VisitsCounter
   counter ConversionRateCounter
+  counter CigaretteCounter
+  counter ReturnedOrderCounter
+
+  def grumpy! = update!(grumpy: true)
 end

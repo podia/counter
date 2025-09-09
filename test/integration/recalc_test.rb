@@ -37,4 +37,18 @@ class RecalcTest < ActiveSupport::TestCase
     u.conversion_rate.recalc!
     assert_equal 2, u.conversion_rate.value
   end
+
+  test "calculated_values recalculate from their callable" do
+    u = User.create!(grumpy: false)
+
+    u.cigarette_counter.reset!
+    assert_equal 0, u.cigarette_counter.value
+
+    u.cigarette_counter.recalc!
+    assert_equal 4, u.cigarette_counter.value.to_i
+
+    u.grumpy!
+    u.cigarette_counter.recalc!
+    assert_equal 212, u.cigarette_counter.value.to_i
+  end
 end

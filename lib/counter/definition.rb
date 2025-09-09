@@ -34,6 +34,10 @@ class Counter::Definition
   attr_writer :dependent_counters
   # The block to call to calculate the counter
   attr_accessor :calculated_from
+  # The block used to manually set the value
+  attr_accessor :calculated_value
+  # The counter's record name
+  attr_writer :record_name
 
   # Is this a counter which sums a column?
   def sum?
@@ -48,6 +52,11 @@ class Counter::Definition
   # Is this counter conditional?
   def conditional?
     @conditional
+  end
+
+  # Is this counter using a calculated value?
+  def calculated_value?
+    @calculated_value.present?
   end
 
   # Is this counter calculated from other counters?
@@ -74,11 +83,16 @@ class Counter::Definition
     Counter::Value.find_counter self
   end
 
+  def self.record_name(value)
+    instance.record_name = value.to_s
+  end
+
   # What we record in Counter::Value#name
   def record_name
+    return @record_name if @record_name.present?
     return name if global?
     return "#{model.name.underscore}-#{association_name}" if association_name.present?
-    return "#{model.name.underscore}-#{name}"
+    "#{model.name.underscore}-#{name}"
   end
 
   def conditions
@@ -107,6 +121,17 @@ class Counter::Definition
     instance.name = as.to_s
     # How the counter can be accessed e.g. counter.products_counter
     instance.method_name = as.to_s
+  end
+
+  def self.calculated_value(calculation, association: nil)
+    instance.association_name = association
+    instance.calculated_value = calculation
+    set_default_name
+  end
+
+  def self.set_default_name
+    instance.name ||= to_s.underscore
+    instance.method_name ||= to_s.underscore
   end
 
   def self.global

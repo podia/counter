@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2025_07_30_141956) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
   create_table "counter_values", force: :cascade do |t|
     t.string "name"
     t.decimal "value", default: "0.0", null: false
@@ -63,6 +63,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_07_30_141956) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "grumpy", default: false
   end
 
   add_foreign_key "orders", "products"

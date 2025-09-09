@@ -19,18 +19,33 @@ module Counter::Increment
     end
 
     def add_item item
+      if definition.calculated_value?
+        recalc!
+        return
+      end
+
       return unless increment?(item, :create)
 
       increment! by: increment_from_item(item)
     end
 
     def remove_item item
+      if definition.calculated_value?
+        recalc!
+        return
+      end
+
       return unless decrement?(item, :delete)
 
       decrement! by: increment_from_item(item)
     end
 
     def update_item item
+      if definition.calculated_value?
+        recalc!
+        return
+      end
+
       if increment?(item, :update)
         increment! by: increment_from_item(item)
       end

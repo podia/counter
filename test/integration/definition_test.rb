@@ -3,7 +3,7 @@ require "test_helper"
 class DefinitionTest < ActiveSupport::TestCase
   test "configures the counters on the parent model" do
     definitions = User.counter_configs
-    assert_equal 5, definitions.length
+    assert_equal 7, definitions.length
     definition = definitions.first
     assert_equal ProductCounter, definition.class
     assert_equal User, definition.model
@@ -167,5 +167,23 @@ class DefinitionTest < ActiveSupport::TestCase
     product.orders.create! price: 10, user: u
     assert_kind_of Counter::Value, product.order_revenue
     assert 10, product.order_revenue.value
+  end
+
+  test "calculated values can be defined" do
+    assert_kind_of Proc, CigaretteCounter.instance.calculated_value
+  end
+
+  test "calculated values can define an association" do
+    assert_kind_of Proc, ReturnedOrderCounter.instance.calculated_value
+    assert_equal :orders, ReturnedOrderCounter.instance.association_name
+  end
+
+  test "calculated values set a default name" do
+    assert_equal "cigarette_counter", CigaretteCounter.instance.name
+    assert_equal "cigarette_counter", CigaretteCounter.instance.method_name
+  end
+
+  test "value record names can be defined" do
+    assert_equal "users_returned_orders", ReturnedOrderCounter.instance.record_name
   end
 end
