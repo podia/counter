@@ -19,6 +19,7 @@ Counting and aggregation library for Rails.
     - [Aggregate a value (e.g. sum of order revenue)](#aggregate-a-value-eg-sum-of-order-revenue)
     - [Hooks](#hooks)
     - [Manual counters](#manual-counters)
+    - [Manually calculating a value](#manually-calculating-a-value)
     - [Calculating a value from other counters](#calculating-a-value-from-other-counters)
     - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Testing](#testing)
@@ -71,6 +72,7 @@ $ rails counter:install:migrations
 `Counter::Value` is the value of a counter. So, for example, a User might have many Posts, so a User would have a `counters` association containing a `Counter::Value` for the number of posts. Counters can be accessed via their name `user.posts_counter` or via the `find_counter` method on the association, e.g. `user.counters.find_counter PostCounter`
 
 ## Basic usage
+
 ### Define a counter
 
 Counters are defined in a seperate class using a small DSL.
@@ -252,6 +254,34 @@ TotalOrderCounter.counter.value #=> 5
 TotalOrderCounter.counter.increment! #=> 6
 ```
 
+### Manually calculating a value
+
+There are edge cases where a counter can't be calculated by associations or other counters. You can tell the counter its value manually, in these cases, by using `calculated_value`. Calculated value takes a lambda and an association. The lambda is called each time an associated record is created, updated, or destroyed.
+
+```ruby
+class RiskyOrdersCounter < Counter::Definition
+  calculated_value ->(customer) { customer.orders.risky.count }, association: :orders
+end
+
+class Customer
+  include Counters::Counter
+  counter RiskyOrdersCounter
+end
+
+class Order
+  include Counter::Changable
+end
+```
+
+You may want to change the auto-generated name of the counter value. In this case, you can provide that with `record_name`.
+
+```ruby
+class RiskyOrdersCounter < Counter::Definition
+  calculated_value ->(customer) { customer.orders.risky.count }, association: :orders
+  record_name :risky_customer_orders
+end
+```
+
 ### Calculating a value from other counters
 
 You may also need have a common need to calculate a value from other counters. For example, given counters for the number of purchases and the number of visits, you might want to calculate the conversion rate. You can do this with a `calculate_from` block.
@@ -325,7 +355,6 @@ We also define several conditions that operate on the instance level, i.e. when 
 We use the `has_changed?` helper to query the ActiveRecord `previous_changes` hash and check what has changed. You can specify either Procs or values for `from`/`to`. If you only specify a `from` value, `to` will default to "any value" (Counter::Any.instance)
 
 Conditional counters work best with a single attribute. If the counter is conditional on e.g. confirmed and subscribed, the update tracking logic becomes very complex especially if the values are both updated at the same time. The solution to this is hopefully Rails generated columns in 7.1 so you can store a "subscribed_and_confirmed" column and check the value of that instead. Rails dirty tracking will need to work with generated columns though; see [this PR](https://github.com/rails/rails/pull/48628).
-
 
 ## Testing
 
@@ -413,6 +442,7 @@ To release a new version of the counterwise gem:
 1. **Merge changes**: Ensure all changes are merged into the main branch via pull requests.
 
 2. **Update version**: Bump the version number in `lib/counter/version.rb`:
+
    ```ruby
    module Counter
      VERSION = "x.y.z"  # Update to new version
@@ -420,6 +450,7 @@ To release a new version of the counterwise gem:
    ```
 
 3. **Commit and push version bump**:
+
    ```bash
    git add lib/counter/version.rb
    git commit -m "Bump version to x.y.z"
@@ -439,6 +470,7 @@ The gem will be available on [RubyGems.org](https://rubygems.org/gems/counterwis
 ## TODO
 
 See the asociated project in Github but roughly I'm thinking:
+
 - Implement the background job pattern for incrementing counters
 - Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
