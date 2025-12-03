@@ -21,6 +21,7 @@ Counting and aggregation library for Rails.
     - [Manual counters](#manual-counters)
     - [Manually calculating a value](#manually-calculating-a-value)
     - [Calculating a value from other counters](#calculating-a-value-from-other-counters)
+    - [Hierarchical counters](#hierarchical-counters)
     - [Defining a conditional counter](#defining-a-conditional-counter)
   - [Testing](#testing)
     - [Using Rspec](#using-rspec)
@@ -298,6 +299,70 @@ end
 
 This recalculates the conversion rate each time the visits or order counters are updated. If either dependant counter is not present, the calculation will not be run (i.e., visits and order will never be nil).
 
+### Hierarchical counters
+
+Hierarchical counters aggregate values from child counters across associations. For example, counting all reactions on a topic by summing the reaction counts from each of its posts.
+
+```ruby
+# Define the leaf counter on Post
+class PostReactionsCounter < Counter::Definition
+  count :reactions
+end
+
+# Define the hierarchical counter on Topic
+class TopicReactionsCounter < Counter::Definition
+  hierarchical_from PostReactionsCounter, through: :posts
+end
+```
+
+Wire up the models with proper `inverse_of` declarations:
+
+```ruby
+class Post < ApplicationRecord
+  include Counter::Counters
+
+  belongs_to :topic, inverse_of: :posts
+  has_many :reactions, inverse_of: :post
+
+  counter PostReactionsCounter
+end
+
+class Topic < ApplicationRecord
+  include Counter::Counters
+
+  has_many :posts, inverse_of: :topic
+
+  counter TopicReactionsCounter
+end
+```
+
+When a reaction is created or destroyed, the change propagates automatically:
+
+```ruby
+topic = Topic.create!(title: "My Topic")
+post = topic.posts.create!(content: "Hello")
+
+post.reactions.create!(emoji: "👍")
+post.reactions.create!(emoji: "❤️")
+
+post.reactions_counter.value   #=> 2
+topic.topic_reactions_counter.value  #=> 2
+```
+
+Calling `recalc!` on a hierarchical counter will first recalculate all child counters:
+
+```ruby
+topic.topic_reactions_counter.recalc!  # Recalculates all post counters first
+```
+
+To skip propagation (e.g., during bulk operations), use `without_propagation`:
+
+```ruby
+post.reactions_counter.without_propagation do
+  post.reactions_counter.update!(value: 0)  # Won't update topic counter
+end
+```
+
 ### Defining a conditional counter
 
 Conditional counters allow you to count a subset of an association, like just the premium product with a price >= 1000.
@@ -472,7 +537,6 @@ The gem will be available on [RubyGems.org](https://rubygems.org/gems/counterwis
 See the asociated project in Github but roughly I'm thinking:
 
 - Implement the background job pattern for incrementing counters
-- Hierarchical counters. For example, a Site sends many Newsletters and each Newsletter results in many EmailMessages. Each EmailMessage can be marked as spam. How do you create counters for how many spam emails were sent at the Newsletter level and the Site level?
 - Time-based counters for analytics. Instead of a User having one OrderRevenue counter, they would have an OrderRevenue counter for each day. These counters would then be used to produce a chart of their product revenue over the month. Not sure if these are just special counters or something else entirely? Do they use the same ActiveRecord model?
 - In a similar vein of supporting different value types, can we support HLL values? Instead of increment an integer we add the items hash to a HyperLogLog so we can count unique items. An example would be counting site visits in a time-based daily counter, then combine the daily counts and still obtain an estimated number of monthly _unique_ visits. Again, not sure if this is the same ActiveRecord model or something different.
 - Actually start running this in production for basic use cases
