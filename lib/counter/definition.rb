@@ -39,6 +39,12 @@ class Counter::Definition
   # The counter's record name
   attr_writer :record_name
 
+  # Hierarchical counter attributes
+  # Child definitions this counter aggregates from
+  attr_writer :hierarchical_children
+  # Parent definitions this counter propagates to
+  attr_writer :hierarchical_parents
+
   # Is this a counter which sums a column?
   def sum?
     column_to_count.present?
@@ -68,7 +74,13 @@ class Counter::Definition
   # Manual counters are not automatically updated from an association
   # or calculated from other counters
   def manual?
-    association_name.nil? && !calculated?
+    association_name.nil? && !calculated? && !hierarchical?
+  end
+
+  # Is this a hierarchical counter?
+  # Hierarchical counters aggregate values from child counters
+  def hierarchical?
+    hierarchical_children.present?
   end
 
   # for global counter instances to find their definition
@@ -113,6 +125,16 @@ class Counter::Definition
   def dependent_counters
     @dependent_counters ||= []
     @dependent_counters
+  end
+
+  def hierarchical_children
+    @hierarchical_children ||= []
+    @hierarchical_children
+  end
+
+  def hierarchical_parents
+    @hierarchical_parents ||= []
+    @hierarchical_parents
   end
 
   # Set the association we're counting
@@ -187,5 +209,82 @@ class Counter::Definition
 
   def self.after_change block
     instance.counter_hooks << block
+  end
+
+  # Define a hierarchical counter that aggregates from child counters
+  #
+  # Usage:
+  #   class TopicReactionsCounter < Counter::Definition
+  #     hierarchical_from PostReactionsCounter, through: :posts
+  #   end
+  #
+  # The parent counter will:
+  # - Automatically update when child counters change (via delta propagation)
+  # - Support recalc! by summing all child counter values
+  #
+  # @param child_counter_class [Class] The child counter definition class
+  # @param through [Symbol] The association name on the parent model to reach children
+  def self.hierarchical_from(child_counter_class, through:)
+    child_def = child_counter_class.instance
+    parent_def = instance
+
+    parent_def.hierarchical_children << {
+      child_definition_class: child_counter_class,
+      through: through
+    }
+
+    Counter::Definition.register_pending_hierarchical(parent_def)
+
+    set_default_name
+  end
+
+  # Wire up the hierarchical relationship after the parent model is set
+  # Called from Counter::Counters.counter
+  def wire_hierarchical_relationship!
+    return unless hierarchical?
+
+    hierarchical_children.each do |config|
+      child_counter_class = config[:child_definition_class]
+      through = config[:through]
+
+      child_def = child_counter_class.instance
+
+      parent_reflection = model.reflect_on_association(through)
+      raise Counter::Error, "Unknown association #{through} on #{model.name}" if parent_reflection.nil?
+
+      inverse_on_child = parent_reflection.inverse_of
+      raise Counter::Error, "#{through} on #{model.name} must declare inverse_of to be used hierarchically" if inverse_on_child.nil?
+
+      via_on_child = inverse_on_child.name
+
+      already_wired = child_def.hierarchical_parents.any? { |p| p[:parent_definition] == self }
+      next if already_wired
+
+      child_def.hierarchical_parents << {
+        parent_definition_class: self.class,
+        parent_definition: self,
+        via: via_on_child
+      }
+    end
+  end
+
+  # Registry of hierarchical definitions waiting for their child counters
+  @pending_hierarchical_definitions = []
+
+  def self.pending_hierarchical_definitions
+    @pending_hierarchical_definitions ||= []
+  end
+
+  def self.register_pending_hierarchical(definition)
+    pending_hierarchical_definitions << definition unless pending_hierarchical_definitions.include?(definition)
+  end
+
+  # Called when a child counter is registered to check if any parent counters
+  # are waiting to wire to it
+  def self.wire_pending_hierarchical_parents!
+    pending_hierarchical_definitions.each do |definition|
+      next unless definition.model.present?
+      definition.wire_hierarchical_relationship!
+    end
   end
 end

@@ -6,6 +6,8 @@ module Counter::Recalculatable
       recalculate_with_value!
     elsif definition.calculated?
       calculate!
+    elsif definition.hierarchical?
+      recalc_hierarchical!
     elsif definition.manual?
       raise Counter::Error.new("Can't recalculate a manual counter")
     else

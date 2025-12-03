@@ -44,5 +44,5 @@ class Counter::Value < ApplicationRecord
   include Counter::Summable
   include Counter::Conditional
   include Counter::Calculated
-  # include Counter::Hierarchical
+  include Counter::Hierarchical
 end

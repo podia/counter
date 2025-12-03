@@ -105,6 +105,10 @@ module Counter::Counters
 
         @counter_configs << definition unless @counter_configs.include?(definition)
 
+        definition.wire_hierarchical_relationship! if definition.hierarchical?
+
+        Counter::Definition.wire_pending_hierarchical_parents!
+
         association_name = definition.association_name
         if association_name.present?
           # Find the association on this model

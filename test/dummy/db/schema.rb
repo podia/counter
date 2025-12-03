@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_03_100003) do
   create_table "counter_values", force: :cascade do |t|
     t.string "name"
     t.decimal "value", default: "0.0", null: false
@@ -42,6 +42,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
+  create_table "posts", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["topic_id"], name: "index_posts_on_topic_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "name"
@@ -49,6 +57,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_products_on_user_id"
+  end
+
+  create_table "reactions", force: :cascade do |t|
+    t.integer "post_id", null: false
+    t.string "emoji"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_reactions_on_post_id"
   end
 
   create_table "subscriptions", force: :cascade do |t|
@@ -60,6 +76,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
     t.index ["user_id"], name: "index_subscriptions_on_user_id"
   end
 
+  create_table "topics", force: :cascade do |t|
+    t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -68,6 +90,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_28_185102) do
 
   add_foreign_key "orders", "products"
   add_foreign_key "orders", "users"
+  add_foreign_key "posts", "topics"
   add_foreign_key "products", "users"
+  add_foreign_key "reactions", "posts"
   add_foreign_key "subscriptions", "users"
 end
