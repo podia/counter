@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_03_100003) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_09_100001) do
   create_table "counter_values", force: :cascade do |t|
     t.string "name"
     t.decimal "value", default: "0.0", null: false
@@ -60,11 +60,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_100003) do
   end
 
   create_table "reactions", force: :cascade do |t|
-    t.integer "post_id", null: false
     t.string "emoji"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["post_id"], name: "index_reactions_on_post_id"
+    t.string "reactable_type", null: false
+    t.integer "reactable_id", null: false
+    t.index ["reactable_type", "reactable_id"], name: "index_reactions_on_reactable"
   end
 
   create_table "subscriptions", force: :cascade do |t|
@@ -92,6 +93,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_03_100003) do
   add_foreign_key "orders", "users"
   add_foreign_key "posts", "topics"
   add_foreign_key "products", "users"
-  add_foreign_key "reactions", "posts"
   add_foreign_key "subscriptions", "users"
 end

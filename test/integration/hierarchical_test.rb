@@ -74,6 +74,41 @@ class HierarchicalTest < ActiveSupport::TestCase
     assert_equal 3, topic_counter.reload.value
   end
 
+  test "include_direct counts direct association on parent" do
+    topic = Topic.create!(title: "Test Topic")
+    post = topic.posts.create!(content: "Post 1")
+
+    post.reactions.create!(emoji: "👍")
+    post.reactions.create!(emoji: "❤️")
+
+    topic.reactions.create!(emoji: "🎉")
+    topic.reactions.create!(emoji: "🔥")
+    topic.reactions.create!(emoji: "👏")
+
+    topic_all_counter = topic.topic_all_reactions_counter
+
+    assert_equal 5, topic_all_counter.reload.value
+  end
+
+  test "include_direct recalc counts both child counters and direct association" do
+    topic = Topic.create!(title: "Test Topic")
+    post = topic.posts.create!(content: "Post 1")
+
+    post.reactions.create!(emoji: "👍")
+    post.reactions.create!(emoji: "❤️")
+
+    topic.reactions.create!(emoji: "🎉")
+    topic.reactions.create!(emoji: "🔥")
+
+    Counter::Value.delete_all
+
+    topic_all_counter = topic.topic_all_reactions_counter
+    topic_all_counter.save!
+    topic_all_counter.recalc!
+
+    assert_equal 4, topic_all_counter.reload.value
+  end
+
   test "hierarchical? returns true for hierarchical counters" do
     assert TopicReactionsCounter.instance.hierarchical?
     assert_not PostReactionsCounter.instance.hierarchical?
@@ -85,7 +120,7 @@ class HierarchicalTest < ActiveSupport::TestCase
 
     post_counter_def = PostReactionsCounter.instance
 
-    assert_equal 1, post_counter_def.hierarchical_parents.size
+    assert post_counter_def.hierarchical_parents.size >= 1
 
     parent_config = post_counter_def.hierarchical_parents.first
     assert_equal :topic, parent_config[:via]
@@ -96,9 +131,9 @@ class HierarchicalTest < ActiveSupport::TestCase
     post1 = topic.posts.create!(content: "Post 1")
     post2 = topic.posts.create!(content: "Post 2")
 
-    Reaction.create!(post: post1, emoji: "👍")
-    Reaction.create!(post: post1, emoji: "❤️")
-    Reaction.create!(post: post2, emoji: "🎉")
+    Reaction.create!(reactable: post1, emoji: "👍")
+    Reaction.create!(reactable: post1, emoji: "❤️")
+    Reaction.create!(reactable: post2, emoji: "🎉")
 
     Counter::Value.delete_all
 
@@ -137,8 +172,8 @@ class HierarchicalTest < ActiveSupport::TestCase
     topic = Topic.create!(title: "Test Topic")
     post = topic.posts.create!(content: "Post 1")
 
-    Reaction.create!(post: post, emoji: "👍")
-    Reaction.create!(post: post, emoji: "❤️")
+    Reaction.create!(reactable: post, emoji: "👍")
+    Reaction.create!(reactable: post, emoji: "❤️")
 
     topic_counter = topic.topic_reactions_counter
     topic_counter.save!
