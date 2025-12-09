@@ -224,13 +224,15 @@ class Counter::Definition
   #
   # @param child_counter_class [Class] The child counter definition class
   # @param through [Symbol] The association name on the parent model to reach children
-  def self.hierarchical_from(child_counter_class, through:)
+  # @param include_direct [Symbol, nil] Optional association on the parent to also count directly
+  def self.hierarchical_from(child_counter_class, through:, include_direct: nil)
     child_def = child_counter_class.instance
     parent_def = instance
 
     parent_def.hierarchical_children << {
       child_definition_class: child_counter_class,
-      through: through
+      through: through,
+      include_direct: include_direct
     }
 
     Counter::Definition.register_pending_hierarchical(parent_def)
@@ -246,6 +248,7 @@ class Counter::Definition
     hierarchical_children.each do |config|
       child_counter_class = config[:child_definition_class]
       through = config[:through]
+      include_direct = config[:include_direct]
 
       child_def = child_counter_class.instance
 
@@ -265,7 +268,25 @@ class Counter::Definition
         parent_definition: self,
         via: via_on_child
       }
+
+      wire_direct_association!(include_direct) if include_direct
     end
+  end
+
+  # Wire up callbacks for the direct association (include_direct option)
+  def wire_direct_association!(direct_association)
+    direct_reflection = model.reflect_on_association(direct_association)
+    raise Counter::Error, "Unknown association #{direct_association} on #{model.name}" if direct_reflection.nil?
+
+    direct_class = direct_reflection.class_name.constantize
+    inverse_of_direct = direct_reflection.inverse_of
+    raise Counter::Error, "#{direct_association} on #{model.name} must declare inverse_of" if inverse_of_direct.nil?
+
+    direct_class.include Counter::Countable unless direct_class.respond_to?(:counted_by)
+
+    self.inverse_association = inverse_of_direct.name
+    self.countable_model = direct_class
+    direct_class.add_counted_by(self)
   end
 
   # Registry of hierarchical definitions waiting for their child counters

@@ -48,6 +48,7 @@ module Counter::Hierarchical
     child_def_class = config[:child_definition_class]
     child_def = child_def_class.instance
     through = config[:through]
+    include_direct = config[:include_direct]
 
     recalc_child_counters!(child_def, through)
 
@@ -68,6 +69,10 @@ module Counter::Hierarchical
       )
       .where("#{child_table}.#{child_foreign_key}" => parent.id)
       .sum(:value)
+
+    if include_direct
+      new_value += parent.public_send(include_direct).count
+    end
 
     with_lock do
       update!(value: new_value)
