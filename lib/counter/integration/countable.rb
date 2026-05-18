@@ -33,7 +33,7 @@ module Counter::Countable
         parent_model = parent_association.target
         next unless parent_model
 
-        if parent_model.class.reflect_on_association(:counters) && parent_model.class == counter_definition.model
+        if parent_model.class.reflect_on_association(:counters) && parent_model.is_a?(counter_definition.model)
           counter = parent_model.counters.find_or_create_counter!(counter_definition)
           yield counter if counter
         end
