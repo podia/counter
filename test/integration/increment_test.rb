@@ -68,4 +68,19 @@ class CountersTest < ActiveSupport::TestCase
     Order.destroy_all
     assert_equal 500, user.returned_order_counter.value
   end
+
+  test "increments the parent counter when parent is an STI subclass" do
+    admin = AdminUser.create!
+    admin.products.create!
+    counter = admin.counters.find_or_create_counter! ProductCounter
+    assert_equal 1, counter.value
+  end
+
+  test "updates the parent counter on item update when parent is an STI subclass" do
+    admin = AdminUser.create!
+    product = admin.products.create!(price: 100)
+    assert_nil admin.counters.find_counter(PremiumProductCounter)
+    product.update!(price: 2000)
+    assert_equal 1, admin.counters.find_counter(PremiumProductCounter).value
+  end
 end
