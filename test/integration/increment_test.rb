@@ -79,9 +79,8 @@ class CountersTest < ActiveSupport::TestCase
   test "updates the parent counter on item update when parent is an STI subclass" do
     admin = AdminUser.create!
     product = admin.products.create!(price: 100)
-    counter = admin.counters.find_or_create_counter!(PremiumProductCounter)
-    assert_equal 0, counter.value
+    assert_nil admin.counters.find_counter(PremiumProductCounter)
     product.update!(price: 2000)
-    assert_equal 1, counter.reload.value
+    assert_equal 1, admin.counters.find_counter(PremiumProductCounter).value
   end
 end
