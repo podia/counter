@@ -2,25 +2,29 @@ module Counter::Verifyable
   extend ActiveSupport::Concern
 
   def correct?
-    # We can't verify these values
-    return true if definition.global?
+    # We can't verify these values: manual counters (which includes globals)
+    # have no countable source of truth, so their stored value is authoritative.
+    return true if definition.manual?
 
-    old_value, new_value = verify
-    old_value == new_value
+    correct_value, current_value = verify
+    correct_value == current_value
   end
 
   def correct!
-    # We can't verify these values
-    return true if definition.global?
+    # We can't verify these values: manual counters (which includes globals)
+    # have no countable source of truth, so their stored value is authoritative.
+    return true if definition.manual?
 
-    old_value, new_value = verify
+    correct_value, current_value = verify
 
-    requires_recalculation = old_value != new_value
-    update! value: new_value if requires_recalculation
+    requires_recalculation = correct_value != current_value
+    update! value: correct_value if requires_recalculation
 
     !requires_recalculation
   end
 
+  # Returns [correct_value, current_value]: the value recomputed from live
+  # data, and the value currently stored on the counter.
   def verify
     if definition.calculated?
       [calculate, value]
@@ -43,7 +47,7 @@ module Counter::Verifyable
         counter = counters.where("id >= ?", random_id).limit(1).first
         next if counter.nil?
 
-        if counter.definition.global? || counter.definition.calculated?
+        if counter.definition.manual? || counter.definition.calculated?
           puts "➡️ Skipping counter #{counter.name} (#{counter.id})" if verbose
           next
         end

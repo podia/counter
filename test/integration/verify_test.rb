@@ -11,7 +11,20 @@ class VerifyTest < ActiveSupport::TestCase
     counter.reset!
     assert !counter.correct?
     assert_equal false, counter.correct!
-    assert 1, counter.value
+    # correct! heals the drift by writing the recomputed value back
+    assert counter.correct?
+    assert_equal 1, counter.reload.value
+  end
+
+  test "manual counters are always considered correct" do
+    u = User.create
+    u.visits_counter.increment! by: 5
+    assert u.visits_counter.definition.manual?
+    # Manual counters have no countable source of truth, so they can't drift
+    # and must not raise when run through the verification API.
+    assert u.visits_counter.correct?
+    assert_equal true, u.visits_counter.correct!
+    assert_equal 5, u.visits_counter.reload.value
   end
 
   test "verifies a calculated counter" do
@@ -26,7 +39,7 @@ class VerifyTest < ActiveSupport::TestCase
     u = User.create
     u.products.create!
     u.products_counter.increment! by: 2
-    assert [1, 3], u.products_counter.verify
+    assert_equal [1, 3], u.products_counter.verify
   end
 
   test "sample_and_verify" do
