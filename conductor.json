@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "setup": "bundle install && bin/rails db:test:prepare",
+    "run": "bin/rails test"
+  },
+  "runScriptMode": "concurrent"
+}
